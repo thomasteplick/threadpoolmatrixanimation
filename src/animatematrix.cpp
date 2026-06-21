@@ -109,7 +109,7 @@ void Matrix::handleColorMatrix(int niters) {
 	// Create tasks for the worker threads for the desired
 	// number of iterations.  Divide the matrix up among the threads.
 	// Each thread task colors a portion of the matrix.
-	const int sleepms = 50;
+	const int sleepms = 25;
 	for (int iter = 0; iter < niters; ++iter) {
 		for (int i = 0; i < numThreads; i++) {
 			enqueue(i);

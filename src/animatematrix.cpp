@@ -16,24 +16,6 @@
 #include <string>
 #include "animatematrix.h"
 
-// set the submatrix with random densities
-void Matrix::colorMatrix(int submatrix)
-{
-	constexpr int maxdensity = 10;
-	int nrows = dim/numThreads;
-	int startRow = nrows*submatrix;
-	int endRow = startRow + nrows;
-	// set the matrix with random densities in (0-10]
-	for (int row = startRow; row < endRow; row++) {
-		for (int col = 0; col < dim; col++) {
-			mat[row][col] = std::rand() % maxdensity;
-		}
-	}
-}
-
-// Perform interations of coloring the matrix and queueing tasks
-void Matrix::handleColorMatrix(int niters) {
-
 	//COLORS LIST foreground 1-15
 	//0: Black
 	//1: Blue
@@ -61,50 +43,136 @@ void Matrix::handleColorMatrix(int niters) {
 	//108: background white 0x70
 	//124: background gray 0x80
 
+// colors not in wincon.h
+enum Color : int {
+	FOREGROUND_BLACK=0,
+	FOREGROUND_CYAN=3,
+	FOREGROUND_PURPLE=5,
+	FOREGROUND_BROWN=6,
+	FOREGROUND_WHITE=7,
+	FOREGROUND_GRAY=8,
+	FOREGROUND_ORANGE=12,
+	FOREGROUND_YELLOW=14,
+};
+
+static std::vector<int> density2FGcolor = {
+	FOREGROUND_YELLOW,
+	FOREGROUND_GRAY,
+	FOREGROUND_ORANGE,
+	FOREGROUND_CYAN,
+	FOREGROUND_GREEN,
+	FOREGROUND_BLUE,
+	FOREGROUND_RED,
+	FOREGROUND_PURPLE,
+	FOREGROUND_BROWN,
+	FOREGROUND_WHITE
+};
+
+static std::vector<int> density2BGcolor = {
+	FOREGROUND_YELLOW << 4,
+	FOREGROUND_GRAY << 4,
+	FOREGROUND_ORANGE << 4,
+	FOREGROUND_CYAN << 4,
+	FOREGROUND_GREEN << 4,
+	FOREGROUND_BLUE << 4,
+	FOREGROUND_RED << 4,
+	FOREGROUND_PURPLE << 4,
+	FOREGROUND_BROWN  << 4,
+	FOREGROUND_WHITE << 4,
+};
+
+void Matrix::rotateMatrixSpiralCW(int submatrix) {
+	/*
+	 * Divide the algorithm into four sections,
+	 * traverse the outer perimeter of the matrix
+	 * and move the elements in a CW direction.
+	 * Go to the next inner matrix and traverse it
+	 * in a CW direction the same as before.  Continue
+	 * moving inward until the perimeter is one element.
+	 * The movement resembles an inward spiral.
+	 *  -> -> -> |
+	 * ^         v
+	 * |         |
+	 * ^         v
+	 * | <- <-  <-
+	 *
+	 */
+
+	int prev = mat[submatrix][submatrix];
+	int next;
+	int rowStart = submatrix;         // index of matrix
+	int rowEnd = dim - submatrix - 1; // valid index, not one past
+	int colStart = submatrix;
+	int colEnd = dim - submatrix - 1; // valid index, not one past
+	int dimStep = dim/numThreads;
+	int startStep = dimStep/2;
+	int endStep = startStep;
+
+	// loop over dimension, decreasing by ten in each iteration, starts and stops
+	// decrease by five, to distribute work among threads
+	for (int d = submatrix; d < dim; d+=dimStep) {
+		prev = mat[d][d];
+		// traverse top of matrix going from left to right
+		for (int col = colStart; col < colEnd; col++) {
+			next = mat[rowStart][col+1];
+			mat[rowStart][col+1] = prev;
+			prev = next;
+		}
+		// traverse right side of matrix going top to bottom
+		for (int row = rowStart; row < rowEnd; row++) {
+			next = mat[row+1][colEnd];
+			mat[row+1][colEnd] = prev;
+			prev = next;
+		}
+		// traverse bottom of matrix going from right to left
+		for (int col = colEnd; col > 0; col--) {
+			next = mat[rowEnd][col-1];
+			mat[rowEnd][col-1] = prev;
+			prev = next;
+		}
+
+		// traverse left side of matrix going from bottom to top
+		for (int row = rowEnd; row > 0; row--) {
+			next = mat[row-1][colStart];
+			mat[row-1][colStart] = prev;
+			prev = next;
+		}
+
+		// traverse inner matrix by making dimensions smaller
+		rowStart += startStep;
+		rowEnd -= endStep;
+		colStart += startStep;
+		colEnd -= endStep;
+	}
+
+
+}
+
+// set the submatrix with random densities
+void Matrix::colorMatrix(int submatrix)
+{
+	constexpr int maxdensity = 10;
+	int nrows = dim/numThreads;
+	int startRow = nrows*submatrix;
+	int endRow = startRow + nrows;
+	// set the matrix with random densities in (0-10]
+	for (int row = startRow; row < endRow; row++) {
+		for (int col = 0; col < dim; col++) {
+			mat[row][col] = std::rand() % maxdensity;
+		}
+	}
+}
+
+// Perform interations of coloring the matrix and queueing tasks
+void Matrix::handleColorMatrix(int niters) {
+
 	// map matrix density to windows color attribute
-
-	// colors not in wincon.h
-	enum Color : int {
-		FOREGROUND_BLACK=0,
-		FOREGROUND_CYAN=3,
-		FOREGROUND_PURPLE=5,
-		FOREGROUND_BROWN=6,
-		FOREGROUND_WHITE=7,
-		FOREGROUND_GRAY=8,
-		FOREGROUND_ORANGE=12,
-		FOREGROUND_YELLOW=14,
-	};
-
-	std::vector<int> density2FGcolor = {
-		FOREGROUND_YELLOW,
-		FOREGROUND_GRAY,
-		FOREGROUND_ORANGE,
-		FOREGROUND_CYAN,
-		FOREGROUND_GREEN,
-		FOREGROUND_BLUE,
-		FOREGROUND_RED,
-		FOREGROUND_PURPLE,
-		FOREGROUND_BROWN,
-		FOREGROUND_WHITE,
-	};
-
-	std::vector<int> density2BGcolor = {
-		FOREGROUND_YELLOW << 4,
-		FOREGROUND_GRAY << 4,
-		FOREGROUND_ORANGE << 4,
-		FOREGROUND_CYAN << 4,
-		FOREGROUND_GREEN << 4,
-		FOREGROUND_BLUE << 4,
-		FOREGROUND_RED << 4,
-		FOREGROUND_PURPLE << 4,
-		FOREGROUND_BROWN  << 4,
-		FOREGROUND_WHITE << 4,
-	};
 
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
 	// Save the current text colors.
 	GetConsoleScreenBufferInfo(hConsole, &csbiInfo);
+	const int colorMatrix = 0;
 
 	// Create tasks for the worker threads for the desired
 	// number of iterations.  Divide the matrix up among the threads.
@@ -112,7 +180,7 @@ void Matrix::handleColorMatrix(int niters) {
 	const int sleepms = 25;
 	for (int iter = 0; iter < niters; ++iter) {
 		for (int i = 0; i < numThreads; i++) {
-			enqueue(i);
+			enqueue(std::make_pair(colorMatrix, i));
 		}
 		// how fast to change the matrix colors
 		std::this_thread::sleep_for(std::chrono::milliseconds(sleepms));
@@ -129,15 +197,62 @@ void Matrix::handleColorMatrix(int niters) {
 	}
 }
 
-// iterate over queueing tasks to rotate the matrix colors
-void Matrix::handleRotateMatrix() {
-	// create pool with 5 threads
+// rotate the matrix CW in a spiral motion
+void Matrix::handleRotateMatrixSpiralCW(int niters) {
+	// map matrix density to windows color attribute
 
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+	// Save the current text colors.
+	GetConsoleScreenBufferInfo(hConsole, &csbiInfo);
+
+	// Create tasks for the worker threads for the desired
+	// number of iterations.  Divide the matrix up among the threads.
+	// Each thread task colors a portion of the matrix.
+
+	// create the densities and show their colors
+	const int sleepms = 25;
+	const int colorMatrix = 0;
+	for (int i = 0; i < numThreads; i++) {
+		enqueue(std::make_pair(colorMatrix, i));
+	}
+	std::this_thread::sleep_for(std::chrono::milliseconds(sleepms));
+	// read the matrix containing the densities (0-9) to be converted to colors
+	for (const auto &vec : mat) {
+		for (const auto &val: vec) {
+			SetConsoleTextAttribute(hConsole, density2FGcolor[val] | density2BGcolor[val]);
+			std::cout << "  ";
+		}
+		// Restore default foreground and background
+		SetConsoleTextAttribute(hConsole, FOREGROUND_BLACK);
+		std::cout << std::endl;
+	}
+
+	// rotate the densities created above and show their colors
+	const int rotateMatrixSpiralCW = 1;
+	for (int iter = 0; iter < niters; ++iter) {
+		for (int i = 0; i < numThreads; i++) {
+			enqueue(std::make_pair(rotateMatrixSpiralCW, i));
+		}
+		// how fast to rotate the matrix
+		std::this_thread::sleep_for(std::chrono::milliseconds(sleepms));
+		// read the matrix containing the densities (0-9) to be converted to colors
+		for (const auto &vec : mat) {
+			for (const auto &val: vec) {
+				SetConsoleTextAttribute(hConsole, density2FGcolor[val] | density2BGcolor[val]);
+				std::cout << "  ";
+			}
+			// Restore default foreground and background
+			SetConsoleTextAttribute(hConsole, FOREGROUND_BLACK);
+			std::cout << std::endl;
+		}
+	}
 }
 
 // Constructor to creates a thread pool with given number of threads
 Matrix::Matrix(int nthreads)
 {
+
 	numThreads = nthreads;
 	// Create worker threads
 	for (int i = 0; i < numThreads; ++i) {
@@ -165,11 +280,12 @@ Matrix::~Matrix()
 }
 
 // Enqueue task for execution by the thread pool
-void Matrix::enqueue(int subMat)
+void Matrix::enqueue(std::pair<int,int> task)
 {
 	{
+		// access the shared data safely - critical section
 		std::unique_lock<std::mutex> lock(queue_mutex);
-		tasks.push(subMat);
+		tasks.push(task);
 	}
 	cv.notify_one();
 }
@@ -177,13 +293,21 @@ void Matrix::enqueue(int subMat)
 // run the tasks until told to stop
 void Matrix::runWorkerTask()
 {
+	// assign the member functions address to the array of member function pointers
+	// Do not change the order of the functions since the handle functions rely on
+	// this order.
+	Matrix::matrixMbr matfcn[] = {
+	    &Matrix::colorMatrix,
+		&Matrix::rotateMatrixSpiralCW,
+	};
+
 	while (true) {
 		// Unlock the queue before executing the task so that other
 		// threads can perform enqueue tasks
-		int submatrix;
+		std::pair<int,int> task;
 		{
 			// Locking the queue so that data
-			// can be shared safely
+			// can be shared safely - critical section
 			std::unique_lock<std::mutex> lock(queue_mutex);
 
 			// Waiting until there is a task to
@@ -199,12 +323,12 @@ void Matrix::runWorkerTask()
 			}
 
 			// Get the next task from the queue
-			submatrix = tasks.front();
+			task = tasks.front();
 			tasks.pop();
 		}
 
-		// set the matrix for this submatrix with random densities
-		colorMatrix(submatrix);
+		// run the task using first=member matrix function, second=submatrix
+		(this->*matfcn[task.first])(task.second);
 	}
 }
 
@@ -284,6 +408,7 @@ int main() {
 			matrx.handleColorMatrix(niters);
 			break;
 		case 2:
+			matrx.handleRotateMatrixSpiralCW(niters);
 			break;
 		case 3:
 			break;

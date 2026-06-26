@@ -14,6 +14,7 @@
 #include <wincon.h>
 #include <cstdlib>
 #include <string>
+#include <cmath>
 #include "animatematrix.h"
 
 	//COLORS LIST foreground 1-15
@@ -81,6 +82,72 @@ static std::vector<int> density2BGcolor = {
 	FOREGROUND_WHITE << 4,
 };
 
+// one degree step size
+const double delAng = 3.14159265358979323846264/180.0;
+
+void Matrix::rotateMatrixSpiralCCW(int submatrix) {
+	/*
+	 * Divide the algorithm into four sections,
+	 * traverse the outer perimeter of the matrix
+	 * and move the elements in a CCW direction.
+	 * Go to the next inner matrix and traverse it
+	 * in a CCW direction the same as before.  Continue
+	 * moving inward until the perimeter is one element.
+	 * The movement resembles an inward spiral.
+	 * | <- <- <- ^
+	 * v          |
+	 * |          ^
+	 * v -> -> -> |
+	 */
+
+	int prev = mat[submatrix][dim-submatrix-1];
+	int next;
+	int rowStart = submatrix;         // index of matrix
+	int rowEnd = dim - submatrix - 1; // valid index, not one past
+	int colStart = dim - submatrix -1;
+	int colEnd = submatrix;           // valid index, not one past
+	int dimStep = dim/numThreads;
+	int startStep = dimStep/2;
+	int endStep = startStep;
+
+	// loop over dimension, decreasing by ten in each iteration, starts and stops
+	// decrease by five, to distribute work among threads
+	for (int d = submatrix; d < dim; d+=dimStep) {
+		prev = mat[d][dim - d -1];
+		// traverse top of matrix going from right to left
+		for (int col = colStart; col > colEnd; col--) {
+			next = mat[rowStart][col-1];
+			mat[rowStart][col-1] = prev;
+			prev = next;
+		}
+		// traverse left side of matrix going top to bottom
+		for (int row = rowStart; row < rowEnd; row++) {
+			next = mat[row+1][colStart];
+			mat[row+1][colStart] = prev;
+			prev = next;
+		}
+		// traverse bottom of matrix going from left to right
+		for (int col = colStart; col < colEnd; col++) {
+			next = mat[rowEnd][col+1];
+			mat[rowEnd][col+1] = prev;
+			prev = next;
+		}
+
+		// traverse right side of matrix going from bottom to top
+		for (int row = rowEnd; row > 0; row--) {
+			next = mat[row-1][colEnd];
+			mat[row-1][colEnd] = prev;
+			prev = next;
+		}
+
+		// traverse inner matrix by making dimensions smaller
+		rowStart += startStep;
+		rowEnd -= endStep;
+		colStart -= startStep;
+		colEnd += endStep;
+	}
+}
+
 void Matrix::rotateMatrixSpiralCW(int submatrix) {
 	/*
 	 * Divide the algorithm into four sections,
@@ -111,7 +178,7 @@ void Matrix::rotateMatrixSpiralCW(int submatrix) {
 	// loop over dimension, decreasing by ten in each iteration, starts and stops
 	// decrease by five, to distribute work among threads
 	for (int d = submatrix; d < dim; d+=dimStep) {
-		prev = mat[d][d];
+		prev = mat[rowStart][colStart];
 		// traverse top of matrix going from left to right
 		for (int col = colStart; col < colEnd; col++) {
 			next = mat[rowStart][col+1];
@@ -144,8 +211,6 @@ void Matrix::rotateMatrixSpiralCW(int submatrix) {
 		colStart += startStep;
 		colEnd -= endStep;
 	}
-
-
 }
 
 // set the submatrix with random densities
@@ -177,13 +242,16 @@ void Matrix::handleColorMatrix(int niters) {
 	// Create tasks for the worker threads for the desired
 	// number of iterations.  Divide the matrix up among the threads.
 	// Each thread task colors a portion of the matrix.
-	const int sleepms = 25;
 	for (int iter = 0; iter < niters; ++iter) {
+		tasksdone = 0;
 		for (int i = 0; i < numThreads; i++) {
 			enqueue(std::make_pair(colorMatrix, i));
 		}
-		// how fast to change the matrix colors
-		std::this_thread::sleep_for(std::chrono::milliseconds(sleepms));
+		const int sleepms = 25;
+
+		while (tasksdone != numThreads) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(sleepms));
+		}
 		// read the matrix containing the densities (0-9) to be converted to colors
 		for (const auto &vec : mat) {
 			for (const auto &val: vec) {
@@ -211,13 +279,46 @@ void Matrix::handleRotateMatrixSpiralCW(int niters) {
 	// Each thread task colors a portion of the matrix.
 
 	// create the densities and show their colors
-	const int sleepms = 25;
-	const int colorMatrix = 0;
-	for (int i = 0; i < numThreads; i++) {
-		enqueue(std::make_pair(colorMatrix, i));
+	//const int sleepms = 25;
+	constexpr int maxdensity = 10;
+
+	int rowStart = 0;     // index of matrix
+	int rowEnd = dim - 1; // valid index, not one past
+	int colStart = 0;
+	int colEnd = dim - 1; // valid index, not one past
+	int dimStep = 2;  // matrix dimension is reduced by 2 each iteration
+	int startStep = dimStep/2;
+	int endStep = startStep;
+
+	// Set color according to matrix size and the side of the matrix
+	// Spiral inward along the outer perimeter of the matrix.
+	for (int d = 0; d < dim; d+=dimStep) {
+		// traverse top of matrix going from left to right
+		// traverse bottom of matrix going from right to left
+		int density1 = std::rand()%maxdensity;
+		int density2 = std::rand()%maxdensity;
+		for (int col = colStart; col < colEnd; col++) {
+			mat[rowStart][col] = density1;
+			mat[rowEnd][col+1] = density2;
+		}
+
+		// traverse right side of matrix going top to bottom
+		// traverse left side of matrix going from bottom to top
+		density1 = std::rand()%maxdensity;
+		density2 = std::rand()%maxdensity;
+		for (int row = rowStart; row < rowEnd; row++) {
+			mat[row+1][colStart] = density1;
+			mat[row][colEnd] = density2;
+		}
+
+		// traverse inner matrix by making dimensions smaller
+		rowStart += startStep;
+		rowEnd -= endStep;
+		colStart += startStep;
+		colEnd -= endStep;
 	}
-	std::this_thread::sleep_for(std::chrono::milliseconds(sleepms));
-	// read the matrix containing the densities (0-9) to be converted to colors
+
+	// read the matrix values containing the densities (0-9) and convert to FG and BG colors
 	for (const auto &vec : mat) {
 		for (const auto &val: vec) {
 			SetConsoleTextAttribute(hConsole, density2FGcolor[val] | density2BGcolor[val]);
@@ -231,11 +332,18 @@ void Matrix::handleRotateMatrixSpiralCW(int niters) {
 	// rotate the densities created above and show their colors
 	const int rotateMatrixSpiralCW = 1;
 	for (int iter = 0; iter < niters; ++iter) {
+
+		tasksdone = 0;
+
 		for (int i = 0; i < numThreads; i++) {
 			enqueue(std::make_pair(rotateMatrixSpiralCW, i));
 		}
-		// how fast to rotate the matrix
-		std::this_thread::sleep_for(std::chrono::milliseconds(sleepms));
+		const int sleepms = 25;
+
+		while (tasksdone != numThreads) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(sleepms));
+		}
+
 		// read the matrix containing the densities (0-9) to be converted to colors
 		for (const auto &vec : mat) {
 			for (const auto &val: vec) {
@@ -249,11 +357,100 @@ void Matrix::handleRotateMatrixSpiralCW(int niters) {
 	}
 }
 
-// Constructor to creates a thread pool with given number of threads
+// rotate the matrix CCW in a spiral motion
+void Matrix::handleRotateMatrixSpiralCCW(int niters) {
+	// map matrix density to windows color attribute
+
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+	// Save the current text colors.
+	GetConsoleScreenBufferInfo(hConsole, &csbiInfo);
+
+	// Create tasks for the worker threads for the desired
+	// number of iterations.  Divide the matrix up among the threads.
+	// Each thread task colors a portion of the matrix.
+
+	// create the densities and show their colors
+	constexpr int maxdensity = 10;
+
+	int rowStart = 0;     // index of matrix
+	int rowEnd = dim - 1; // valid index, not one past
+	int colStart = 0;
+	int colEnd = dim - 1; // valid index, not one past
+	int dimStep = 2;  // matrix dimension is reduced by 2 each iteration
+	int startStep = dimStep/2;
+	int endStep = startStep;
+
+	// Set color according to matrix size and the side of the matrix
+	// Spiral inward along the outer perimeter of the matrix.
+	for (int d = 0; d < dim; d+=dimStep) {
+		// traverse top of matrix going from left to right
+		// traverse bottom of matrix going from right to left
+		int density1 = std::rand()%maxdensity;
+		int density2 = std::rand()%maxdensity;
+		for (int col = colStart; col < colEnd; col++) {
+			mat[rowStart][col] = density1;
+			mat[rowEnd][col+1] = density2;
+		}
+
+		// traverse right side of matrix going top to bottom
+		// traverse left side of matrix going from bottom to top
+		density1 = std::rand()%maxdensity;
+		density2 = std::rand()%maxdensity;
+		for (int row = rowStart; row < rowEnd; row++) {
+			mat[row+1][colStart] = density1;
+			mat[row][colEnd] = density2;
+		}
+
+		// traverse inner matrix by making dimensions smaller
+		rowStart += startStep;
+		rowEnd -= endStep;
+		colStart += startStep;
+		colEnd -= endStep;
+	}
+
+	// read the matrix values containing the densities (0-9) and convert to FG and BG colors
+	for (const auto &vec : mat) {
+		for (const auto &val: vec) {
+			SetConsoleTextAttribute(hConsole, density2FGcolor[val] | density2BGcolor[val]);
+			std::cout << "  ";
+		}
+		// Restore default foreground and background
+		SetConsoleTextAttribute(hConsole, FOREGROUND_BLACK);
+		std::cout << std::endl;
+	}
+
+	// rotate the densities created above and show their colors
+	const int rotateMatrixSpiralCCW = 2;
+	for (int iter = 0; iter < niters; ++iter) {
+		tasksdone= 0;
+		for (int i = 0; i < numThreads; i++) {
+			enqueue(std::make_pair(rotateMatrixSpiralCCW, i));
+		}
+		const int sleepms = 25;
+
+		while (tasksdone != numThreads) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(sleepms));
+		}
+		// read the matrix containing the densities (0-9) to be converted to colors
+		for (const auto &vec : mat) {
+			for (const auto &val: vec) {
+				SetConsoleTextAttribute(hConsole, density2FGcolor[val] | density2BGcolor[val]);
+				std::cout << "  ";
+			}
+			// Restore default foreground and background
+			SetConsoleTextAttribute(hConsole, FOREGROUND_BLACK);
+			std::cout << std::endl;
+		}
+	}
+}
+
+// Constructor to create a thread pool with given number of threads
 Matrix::Matrix(int nthreads)
 {
 
 	numThreads = nthreads;
+	tasksdone = 0;
 	// Create worker threads
 	for (int i = 0; i < numThreads; ++i) {
 		threads.emplace_back((std::thread(&Matrix::runWorkerTask, this)));
@@ -299,6 +496,7 @@ void Matrix::runWorkerTask()
 	Matrix::matrixMbr matfcn[] = {
 	    &Matrix::colorMatrix,
 		&Matrix::rotateMatrixSpiralCW,
+		&Matrix::rotateMatrixSpiralCCW,
 	};
 
 	while (true) {
@@ -329,6 +527,9 @@ void Matrix::runWorkerTask()
 
 		// run the task using first=member matrix function, second=submatrix
 		(this->*matfcn[task.first])(task.second);
+
+		tasksdone++;
+
 	}
 }
 
@@ -411,6 +612,7 @@ int main() {
 			matrx.handleRotateMatrixSpiralCW(niters);
 			break;
 		case 3:
+			matrx.handleRotateMatrixSpiralCCW(niters);
 			break;
 		case 4:
 			break;

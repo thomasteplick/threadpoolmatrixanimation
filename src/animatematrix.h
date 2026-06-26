@@ -12,6 +12,7 @@
 #include <thread>
 #include <queue>
 #include <utility>
+#include <atomic>
 #include <condition_variable>
 
 // matrix class to process
@@ -36,6 +37,9 @@ class Matrix {
     // Condition variable to signal changes in the state of
     // the tasks queue
     std::condition_variable cv;
+
+    // number of tasks done, protected by cv_taskdone
+    std::atomic<short> tasksdone ;
 
     // Flag to indicate whether the thread pool should stop
     // or not
@@ -75,6 +79,9 @@ public:
 
     // rotate the matrix CW in a spiral motion
     void handleRotateMatrixSpiralCW(int niters);
+
+    // rotate the matrix CCW in a spiral motion
+    void handleRotateMatrixSpiralCCW(int niters);
 
     // no copying or moving or assigning
     Matrix(const Matrix &mat) = delete;

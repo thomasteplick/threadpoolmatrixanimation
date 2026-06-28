@@ -166,7 +166,6 @@ void Matrix::rotateMatrixSpiralCW(int submatrix) {
 	 */
 
 	int prev = mat[submatrix][submatrix];
-	int next;
 	int rowStart = submatrix;         // index of matrix
 	int rowEnd = dim - submatrix - 1; // valid index, not one past
 	int colStart = submatrix;
@@ -175,32 +174,37 @@ void Matrix::rotateMatrixSpiralCW(int submatrix) {
 	int startStep = dimStep/2;
 	int endStep = startStep;
 
+	// gain exclusive access to mat
+	std::unique_lock<std::mutex> lock(mat_mutex);
+
 	// loop over dimension, decreasing by ten in each iteration, starts and stops
 	// decrease by five, to distribute work among threads
 	for (int d = submatrix; d < dim; d+=dimStep) {
 		prev = mat[rowStart][colStart];
 		// traverse top of matrix going from left to right
 		for (int col = colStart; col < colEnd; col++) {
-			next = mat[rowStart][col+1];
+			int next = mat[rowStart][col+1];
 			mat[rowStart][col+1] = prev;
 			prev = next;
 		}
+
 		// traverse right side of matrix going top to bottom
 		for (int row = rowStart; row < rowEnd; row++) {
-			next = mat[row+1][colEnd];
+			int next = mat[row+1][colEnd];
 			mat[row+1][colEnd] = prev;
 			prev = next;
 		}
+
 		// traverse bottom of matrix going from right to left
-		for (int col = colEnd; col > 0; col--) {
-			next = mat[rowEnd][col-1];
+		for (int col = colEnd; col > colStart; col--) {
+			int next = mat[rowEnd][col-1];
 			mat[rowEnd][col-1] = prev;
 			prev = next;
 		}
 
 		// traverse left side of matrix going from bottom to top
-		for (int row = rowEnd; row > 0; row--) {
-			next = mat[row-1][colStart];
+		for (int row = rowEnd; row > rowStart; row--) {
+			int next = mat[row-1][colStart];
 			mat[row-1][colStart] = prev;
 			prev = next;
 		}
@@ -211,6 +215,7 @@ void Matrix::rotateMatrixSpiralCW(int submatrix) {
 		colStart += startStep;
 		colEnd -= endStep;
 	}
+
 }
 
 // set the submatrix with random densities
@@ -333,13 +338,16 @@ void Matrix::handleRotateMatrixSpiralCW(int niters) {
 	const int rotateMatrixSpiralCW = 1;
 	for (int iter = 0; iter < niters; ++iter) {
 
+		// Reset to zero each iteration
 		tasksdone = 0;
 
+		// queue the tasks for the worker threads
 		for (int i = 0; i < numThreads; i++) {
 			enqueue(std::make_pair(rotateMatrixSpiralCW, i));
 		}
-		const int sleepms = 25;
 
+		const int sleepms = 25;
+		// Wait for the worker threads to finish their tasks
 		while (tasksdone != numThreads) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(sleepms));
 		}
@@ -451,6 +459,7 @@ Matrix::Matrix(int nthreads)
 
 	numThreads = nthreads;
 	tasksdone = 0;
+	stop = false;
 	// Create worker threads
 	for (int i = 0; i < numThreads; ++i) {
 		threads.emplace_back((std::thread(&Matrix::runWorkerTask, this)));
@@ -528,6 +537,7 @@ void Matrix::runWorkerTask()
 		// run the task using first=member matrix function, second=submatrix
 		(this->*matfcn[task.first])(task.second);
 
+		// Atomically increment this thread finished its task
 		tasksdone++;
 
 	}

@@ -48,6 +48,9 @@ class Matrix {
     // wait for tasks until told to terminate
     void runWorkerTask();
 
+    // mutex to synchronize access to matrix
+    std::mutex mat_mutex;
+
     // animate functions for the matrix
     void colorMatrix(int submatrix);
     void rotateMatrixSpiralCW(int submatrix);

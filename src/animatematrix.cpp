@@ -104,16 +104,19 @@ void Matrix::rotateMatrixSpiralCCW(int submatrix) {
 	int next;
 	int rowStart = submatrix;         // index of matrix
 	int rowEnd = dim - submatrix - 1; // valid index, not one past
-	int colStart = dim - submatrix -1;
-	int colEnd = submatrix;           // valid index, not one past
+	int colStart = dim - submatrix -1; // valid index, not one past
+	int colEnd = submatrix;
 	int dimStep = dim/numThreads;
 	int startStep = dimStep/2;
 	int endStep = startStep;
 
+	// gain exclusive access to mat
+	std::unique_lock<std::mutex> lock(mat_mutex);
+
 	// loop over dimension, decreasing by ten in each iteration, starts and stops
 	// decrease by five, to distribute work among threads
 	for (int d = submatrix; d < dim; d+=dimStep) {
-		prev = mat[d][dim - d -1];
+		prev = mat[rowStart][colStart];
 		// traverse top of matrix going from right to left
 		for (int col = colStart; col > colEnd; col--) {
 			next = mat[rowStart][col-1];
@@ -122,21 +125,21 @@ void Matrix::rotateMatrixSpiralCCW(int submatrix) {
 		}
 		// traverse left side of matrix going top to bottom
 		for (int row = rowStart; row < rowEnd; row++) {
-			next = mat[row+1][colStart];
-			mat[row+1][colStart] = prev;
+			next = mat[row+1][colEnd];
+			mat[row+1][colEnd] = prev;
 			prev = next;
 		}
 		// traverse bottom of matrix going from left to right
-		for (int col = colStart; col < colEnd; col++) {
+		for (int col = colEnd; col < colStart; col++) {
 			next = mat[rowEnd][col+1];
 			mat[rowEnd][col+1] = prev;
 			prev = next;
 		}
 
 		// traverse right side of matrix going from bottom to top
-		for (int row = rowEnd; row > 0; row--) {
-			next = mat[row-1][colEnd];
-			mat[row-1][colEnd] = prev;
+		for (int row = rowEnd; row > rowStart; row--) {
+			next = mat[row-1][colStart];
+			mat[row-1][colStart] = prev;
 			prev = next;
 		}
 
@@ -166,6 +169,7 @@ void Matrix::rotateMatrixSpiralCW(int submatrix) {
 	 */
 
 	int prev = mat[submatrix][submatrix];
+	int next;
 	int rowStart = submatrix;         // index of matrix
 	int rowEnd = dim - submatrix - 1; // valid index, not one past
 	int colStart = submatrix;
@@ -183,28 +187,28 @@ void Matrix::rotateMatrixSpiralCW(int submatrix) {
 		prev = mat[rowStart][colStart];
 		// traverse top of matrix going from left to right
 		for (int col = colStart; col < colEnd; col++) {
-			int next = mat[rowStart][col+1];
+			next = mat[rowStart][col+1];
 			mat[rowStart][col+1] = prev;
 			prev = next;
 		}
 
 		// traverse right side of matrix going top to bottom
 		for (int row = rowStart; row < rowEnd; row++) {
-			int next = mat[row+1][colEnd];
+			next = mat[row+1][colEnd];
 			mat[row+1][colEnd] = prev;
 			prev = next;
 		}
 
 		// traverse bottom of matrix going from right to left
 		for (int col = colEnd; col > colStart; col--) {
-			int next = mat[rowEnd][col-1];
+			next = mat[rowEnd][col-1];
 			mat[rowEnd][col-1] = prev;
 			prev = next;
 		}
 
 		// traverse left side of matrix going from bottom to top
 		for (int row = rowEnd; row > rowStart; row--) {
-			int next = mat[row-1][colStart];
+			next = mat[row-1][colStart];
 			mat[row-1][colStart] = prev;
 			prev = next;
 		}
@@ -431,6 +435,7 @@ void Matrix::handleRotateMatrixSpiralCCW(int niters) {
 	// rotate the densities created above and show their colors
 	const int rotateMatrixSpiralCCW = 2;
 	for (int iter = 0; iter < niters; ++iter) {
+		// Reset tasksdone each iteration
 		tasksdone= 0;
 		for (int i = 0; i < numThreads; i++) {
 			enqueue(std::make_pair(rotateMatrixSpiralCCW, i));

@@ -15,8 +15,11 @@
 #include <atomic>
 #include <condition_variable>
 
+using mat90deg = std::vector<std::vector<int>>;
+
 // matrix class to process
 class Matrix {
+
 	// matrix dimension dim x dim, rows x columns
 	static const int dim = 50;
 
@@ -24,6 +27,7 @@ class Matrix {
 
 	// the matrix that will be animated
     int mat[dim][dim];
+    int dblBuf[2][dim][dim];
 
     // Vector to store worker threads
     std::vector<std::thread> threads;
@@ -39,7 +43,10 @@ class Matrix {
     std::condition_variable cv;
 
     // number of tasks done, protected by cv_taskdone
-    std::atomic<short> tasksdone ;
+    std::atomic<short> tasksdone;
+
+    // matrix buffer to use
+    std::atomic<short> mat_buffer;
 
     // Flag to indicate whether the thread pool should stop
     // or not
@@ -85,6 +92,12 @@ public:
 
     // rotate the matrix CCW in a spiral motion
     void handleRotateMatrixSpiralCCW(int niters);
+
+    // rotate the matrix CW 90 degrees
+    void handleRotateMatrix90CW(int niters);
+
+    // rotate the matrix CCW 90 degrees
+    void handleRotateMatrix90CCW(int niters);
 
     // no copying or moving or assigning
     Matrix(const Matrix &mat) = delete;

@@ -85,8 +85,79 @@ static std::vector<int> density2BGcolor = {
 // one degree step size
 const double delAng = 3.14159265358979323846264/180.0;
 
+void Matrix::rotateMatrixSerpentineCCW(int submatrix)
+{
+	/*
+	 * Translate each row to the left and feed the previous row
+	 * output to the next row input.  The last row output feeds
+	 * the first row input.
+	 */
+
+	/*
+	 * Divide the algorithm into four sections,
+	 * traverse the rows of the matrix
+	 * and move the elements in a CCW direction.
+	 * Go to the next row and traverse it
+	 * in a CWW direction the same as before.
+	 * The movement goes back and forth across the columns
+	 * as you descend the rows.
+	 * | <- <- <-|
+	 * | <- <- <-|
+	 * | <- <- <-|
+	 * | <- <- <-|
+	 * | <- <- <-|
+	 */
+
+}
+
+
+// Rotate the matrix in CW serpentine manner
+void Matrix::rotateMatrixSerpentineCW(int submatrix)
+{
+	/*
+	 * Translate each row to the right and feed the previous row
+	 * output to the next row input.  The last row output feeds
+	 * the first row input.
+	 */
+
+	/*
+	 * Divide the algorithm into four sections,
+	 * traverse the rows of the matrix
+	 * and move the elements in a CW direction.
+	 * Go to the next row and traverse it
+	 * in a CW direction the same as before.
+	 * The movement goes back and forth across the columns
+	 * as you descend the rows.
+	 *  |-> -> -> |
+	 *  |-> -> -> |
+	 *  |-> -> -> |
+	 *  |-> -> -> |
+	 *  |-> -> -> |
+	 */
+
+	int prev;
+	int next;
+	int nrows = dim/numThreads;
+	int startRow = nrows*submatrix;
+	int endRow = startRow + nrows;
+
+	// gain exclusive access to mat
+	//std::unique_lock<std::mutex> lock(mat_mutex);
+
+	for (int row = startRow; row < endRow; row++) {
+		prev = mat[row][0];
+		mat[row][0] = prevRow[row];;
+		for (int col = 0; col < dim-1; col++) {
+			next = mat[row][col+1];
+			mat[row][col+1] = prev;
+			prev = next;
+		}
+	}
+}
+
 // Rotate the matrix 90 degrees counter-clockwise
-void Matrix::rotateMatrix90CCW(int submatrix) {
+void Matrix::rotateMatrix90CCW(int submatrix)
+{
 	/*
 	 * Rotate the matrix 90 degrees CCW.  Swap rows and columns using
 	 * double-buffer matrix and swapping them back and forth.
@@ -105,7 +176,8 @@ void Matrix::rotateMatrix90CCW(int submatrix) {
 }
 
 // Rotate the matrix 90 degrees clockwise
-void Matrix::rotateMatrix90CW(int submatrix) {
+void Matrix::rotateMatrix90CW(int submatrix)
+{
 	/*
 	 * Rotate the matrix 90 degrees CW.  Swap rows and columns using
 	 * double-buffer matrix and swapping them back and forth.
@@ -123,7 +195,8 @@ void Matrix::rotateMatrix90CW(int submatrix) {
 	}
 }
 
-void Matrix::rotateMatrixSpiralCCW(int submatrix) {
+void Matrix::rotateMatrixSpiralCCW(int submatrix)
+{
 	/*
 	 * Divide the algorithm into four sections,
 	 * traverse the outer perimeter of the matrix
@@ -257,7 +330,6 @@ void Matrix::rotateMatrixSpiralCW(int submatrix) {
 		colStart += startStep;
 		colEnd -= endStep;
 	}
-
 }
 
 // set the submatrix with random densities
@@ -662,6 +734,85 @@ void Matrix::handleRotateMatrix90CW(int niters) {
 	}
 }
 
+// rotate the matrix in a CW serpentine path
+void Matrix::handleRotateMatrixSerpentineCW(int niters)
+{
+	// map matrix density to windows color attribute
+
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+	// Save the current text colors.
+	GetConsoleScreenBufferInfo(hConsole, &csbiInfo);
+
+	// Create tasks for the worker threads for the desired
+	// number of iterations.  Divide the matrix up among the threads.
+	// Each thread task colors a portion of the matrix.
+
+	// create the densities and show their colors
+	//const int sleepms = 25;
+	constexpr int maxdensity = 10;
+
+	// Set each row a different density
+	for (int row = 0; row < dim; row++) {
+		int density = std::rand()%maxdensity;
+		for (int col = 0; col < dim; col++) {
+			mat[row][col] = density;
+		}
+	}
+
+	// read the matrix values containing the densities (0-9) and convert to FG and BG colors
+	for (const auto &vec : mat) {
+		for (const auto &val: vec) {
+			SetConsoleTextAttribute(hConsole, density2FGcolor[val] | density2BGcolor[val]);
+			std::cout << "  ";
+		}
+		// Restore default foreground and background
+		SetConsoleTextAttribute(hConsole, FOREGROUND_BLACK);
+		std::cout << std::endl;
+	}
+
+	// rotate the densities created above and show their colors
+	const int rotateMatrixSerpentineCW = 5;
+	for (int iter = 0; iter < niters; ++iter) {
+
+		// Reset to zero each iteration
+		tasksdone = 0;
+		// Save the previous iteration's row ends
+		prevRow[0] = mat[dim-1][dim-1];
+		for (int row = 1; row < dim; row++) {
+			prevRow[row] = mat[row-1][dim-1];
+		}
+
+		// queue the tasks for the worker threads
+		for (int i = 0; i < numThreads; i++) {
+			enqueue(std::make_pair(rotateMatrixSerpentineCW, i));
+		}
+
+		const int sleepms = 25;
+		// Wait for the worker threads to finish their tasks
+		while (tasksdone != numThreads) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(sleepms));
+		}
+
+		// read the matrix containing the densities (0-9) to be converted to colors
+		for (const auto &vec : mat) {
+			for (const auto &val: vec) {
+				SetConsoleTextAttribute(hConsole, density2FGcolor[val] | density2BGcolor[val]);
+				std::cout << "  ";
+			}
+			// Restore default foreground and background
+			SetConsoleTextAttribute(hConsole, FOREGROUND_BLACK);
+			std::cout << std::endl;
+		}
+	}
+}
+
+void Matrix::handleRotateMatrixSerpentineCCW(int niters)
+{
+
+}
+
+
 // Constructor to create a thread pool with given number of threads
 Matrix::Matrix(int nthreads)
 {
@@ -719,6 +870,8 @@ void Matrix::runWorkerTask()
 		&Matrix::rotateMatrixSpiralCCW,
 		&Matrix::rotateMatrix90CW,
 		&Matrix::rotateMatrix90CCW,
+		&Matrix::rotateMatrixSerpentineCW,
+		&Matrix::rotateMatrixSerpentineCCW,
 	};
 
 	while (true) {
@@ -789,7 +942,7 @@ int main() {
 	std::cout << "6:matrix rotate serpentine CW\n7:matrix rotate serpentine CCW\n8:matrix rotate row down\n";
 	std::cout << "9:matrix rotate row up\n10:matrix rotate column down\n11:matrix rotate column up --> ";
 	std::cin >> matrixOp;
-	std::cout << "\nEnter number of iterations (0-200)--> ";
+	std::cout << "\nEnter number of iterations (0-200) --> ";
 	std::cin >> niters;
 
 	std::cout << "You entered " << matrixOp << " " << niters << std::endl;
@@ -845,18 +998,14 @@ int main() {
 			matrx.handleRotateMatrix90CCW(niters);
 			break;
 		case 6:
+			matrx.handleRotateMatrixSerpentineCW(niters);
 			break;
 		case 7:
+			matrx.handleRotateMatrixSerpentineCCW(niters);
 			break;
 		case 8:
 			break;
 		case 9:
-			break;
-		case 10:
-			matrx.handleRotateMatrix90CW(niters);
-			break;
-		case 11:
-			matrx.handleRotateMatrix90CCW(niters);
 			break;
 		default:
 			std::cout << "matrix operation " << matrixOp << " not valid\n";

@@ -29,6 +29,9 @@ class Matrix {
     int mat[dim][dim];
     int dblBuf[2][dim][dim];
 
+    // Last row element in mat from previous iteration
+    int prevRow[dim];
+
     // Vector to store worker threads
     std::vector<std::thread> threads;
 
@@ -98,6 +101,12 @@ public:
 
     // rotate the matrix CCW 90 degrees
     void handleRotateMatrix90CCW(int niters);
+
+    // rotate the matrix CW in a serpentine manner
+    void handleRotateMatrixSerpentineCW(int niters);
+
+    // rotate the matrix CCW in a serpentine manner
+    void handleRotateMatrixSerpentineCCW(int niters);
 
     // no copying or moving or assigning
     Matrix(const Matrix &mat) = delete;

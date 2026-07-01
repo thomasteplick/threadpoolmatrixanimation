@@ -69,8 +69,8 @@ class Matrix {
     void rotateMatrixSerpentineCCW(int submatrix);
     void rotateMatrixRowDown(int submatrix);
     void rotateMatrixRowUp(int submatrix);
-    void rotateMatrixColumnDown(int submatrix);
-    void rotateMatrixColumnUp(int submatrix);
+    void rotateMatrixColumnLeft(int submatrix);
+    void rotateMatrixColumnRight(int submatrix);
     void rotateMatrix90CW(int submatrix);
     void rotateMatrix90CCW(int submatrix);
 
@@ -107,6 +107,12 @@ public:
 
     // rotate the matrix CCW in a serpentine manner
     void handleRotateMatrixSerpentineCCW(int niters);
+
+    // rotate the matrix rows up
+    void handleRotateMatrixRowUp(int niters);
+
+    // rotate the matrix rows down
+    void handleRotateMatrixRowDown(int niters);
 
     // no copying or moving or assigning
     Matrix(const Matrix &mat) = delete;

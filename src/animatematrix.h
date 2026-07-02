@@ -114,6 +114,12 @@ public:
     // rotate the matrix rows down
     void handleRotateMatrixRowDown(int niters);
 
+    // rotate the matrix columns left
+    void handleRotateMatrixColumnLeft(int niters);
+
+    // rotate the matrix columns right
+    void handleRotateMatrixColumnRight(int niters);
+
     // no copying or moving or assigning
     Matrix(const Matrix &mat) = delete;
     Matrix& operator=(const Matrix& mat) = delete;

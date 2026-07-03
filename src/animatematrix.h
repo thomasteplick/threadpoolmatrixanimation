@@ -22,6 +22,8 @@ class Matrix {
 
 	// matrix dimension dim x dim, rows x columns
 	static const int dim = 50;
+	static const std::string namedensities; // matrix density, 50x50
+	static const std::string dataDir;  // directory for matrix densities
 
 	int numThreads;
 
@@ -74,6 +76,8 @@ class Matrix {
     void rotateMatrix90CW(int submatrix);
     void rotateMatrix90CCW(int submatrix);
 
+    void loadMatrixDensity();
+
 	// alias for a member void function with int argument
     using matrixMbr = void(Matrix::*)(int);
 
@@ -81,6 +85,7 @@ class Matrix {
     matrixMbr matfcn[];
 
 public:
+
     Matrix(int numTasks = std::thread::hardware_concurrency());
     ~Matrix();
 

@@ -7,9 +7,9 @@
 //============================================================================
 
 #include <iostream>
+#include <fstream>
 #include <thread>
 #include <chrono>
-#include <iostream>
 #include <Windows.h>
 #include <wincon.h>
 #include <cstdlib>
@@ -84,6 +84,30 @@ static std::vector<int> density2BGcolor = {
 
 // one degree step size
 const double delAng = 3.14159265358979323846264/180.0;
+
+// static constant members
+const std::string Matrix::namedensities = "nametjt.txt"; // matrix density, 50x50
+const std::string Matrix::dataDir = "..\\data\\";  // directory for geometric objects
+
+
+void Matrix::loadMatrixDensity()
+{
+	// Open the matrix file containing the densities
+	std::fstream fmatrix;
+	fmatrix.open((dataDir+namedensities).c_str(), std::fstream::in);
+	if (!fmatrix.is_open()) {
+		std::cout << "cannot open file " + namedensities << std::endl;
+		throw std::runtime_error("cannot open file " + namedensities);
+	}
+
+	// Read the geometric object file containing the densities
+	for (int i = 0; i < dim; i++) {
+		for (int j = 0; j < dim; j++) {
+			fmatrix >> mat[i][j];
+		}
+	}
+	fmatrix.close();
+}
 
 // Translate each column left, wrap the first column to the last
 void Matrix::rotateMatrixColumnLeft(int submatrix)
@@ -750,16 +774,10 @@ void Matrix::handleRotateMatrix90CCW(int niters) {
 	// Create tasks for the worker threads for one iteration.
 	// Divide the matrix up among the threads.
 	// Each thread task colors a portion of the matrix.
-	const int colorMatrix = 0;
-	tasksdone = 0;
-	for (int i = 0; i < numThreads; i++) {
-		enqueue(std::make_pair(colorMatrix, i));
-	}
-	const int sleepms = 25;
 
-	while (tasksdone != numThreads) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(sleepms));
-	}
+	// load the matrix
+	loadMatrixDensity();
+
 	// read the matrix containing the densities (0-9) to be converted to colors
 	for (const auto &vec : mat) {
 		for (const auto &val: vec) {
@@ -835,16 +853,10 @@ void Matrix::handleRotateMatrix90CW(int niters) {
 	// Create tasks for the worker threads for one iteration.
 	// Divide the matrix up among the threads.
 	// Each thread task colors a portion of the matrix.
-	const int colorMatrix = 0;
-	tasksdone = 0;
-	for (int i = 0; i < numThreads; i++) {
-		enqueue(std::make_pair(colorMatrix, i));
-	}
-	const int sleepms = 25;
 
-	while (tasksdone != numThreads) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(sleepms));
-	}
+	// load the matrix
+	loadMatrixDensity();
+
 	// read the matrix containing the densities (0-9) to be converted to colors
 	for (const auto &vec : mat) {
 		for (const auto &val: vec) {
@@ -1334,7 +1346,6 @@ void Matrix::handleRotateMatrixColumnRight(int niters)
 // Constructor to create a thread pool with given number of threads
 Matrix::Matrix(int nthreads)
 {
-
 	numThreads = nthreads;
 	tasksdone = 0;
 	// double buffer to use
@@ -1484,7 +1495,7 @@ int main() {
 	const int numthreads = std::min(hwconcur, 5);
 
 	// Create a Matrix instance
-	Matrix matrx(numthreads);
+	Matrix matrx(numthreads); // @suppress("Ambiguous problem")
 
 	for (;;) {
 		switch (matrixOp) {

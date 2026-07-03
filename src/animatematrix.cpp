@@ -251,7 +251,7 @@ void Matrix::rotateMatrixRowUp(int submatrix)
 
 	for (int col = startCol; col < endCol; col++) {
 		prev = mat[dim-1][col];
-		mat[0][col] = prevRow[col];;
+		mat[dim-1][col] = prevRow[col];;
 		for (int row = dim-1; row > 0; row--) {
 			next = mat[row-1][col];
 			mat[row-1][col] = prev;
@@ -1090,6 +1090,7 @@ void Matrix::handleRotateMatrixRowDown(int niters)
 		SetConsoleTextAttribute(hConsole, FOREGROUND_BLACK);
 		std::cout << std::endl;
 	}
+	std::cout << "----------------------------------------------------------------------------------------------------\n";
 
 	// rotate the densities created above and show their colors
 	const int rotateMatrixRowDown = 7;
@@ -1124,6 +1125,7 @@ void Matrix::handleRotateMatrixRowDown(int niters)
 			SetConsoleTextAttribute(hConsole, FOREGROUND_BLACK);
 			std::cout << std::endl;
 		}
+		std::cout << "----------------------------------------------------------------------------------------------------\n";
 	}
 }
 
@@ -1162,6 +1164,8 @@ void Matrix::handleRotateMatrixRowUp(int niters)
 		SetConsoleTextAttribute(hConsole, FOREGROUND_BLACK);
 		std::cout << std::endl;
 	}
+	std::cout << "----------------------------------------------------------------------------------------------------\n";
+
 
 	// rotate the densities created above and show their colors
 	const int rotateMatrixRowUp = 8;
@@ -1196,6 +1200,7 @@ void Matrix::handleRotateMatrixRowUp(int niters)
 			SetConsoleTextAttribute(hConsole, FOREGROUND_BLACK);
 			std::cout << std::endl;
 		}
+		std::cout << "----------------------------------------------------------------------------------------------------\n";
 	}
 }
 

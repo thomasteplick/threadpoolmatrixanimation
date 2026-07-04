@@ -93,7 +93,7 @@ const std::string Matrix::dataDir = "..\\data\\";  // directory for geometric ob
 // varying sizes and colors.
 void Matrix::genGeometricFigs()
 {
-	constexpr int nfigs = 1;
+	constexpr int nfigs = 10;
 	constexpr int maxrad = 10;
 	// don't want white = 9, want 0-8
 	constexpr int maxdensity = 9;

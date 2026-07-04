@@ -84,11 +84,71 @@ static std::vector<int> density2BGcolor = {
 
 // one degree step size
 const double delAng = 3.14159265358979323846264/180.0;
-
 // static constant members
 const std::string Matrix::namedensities = "nametjt.txt"; // matrix density, 50x50
 const std::string Matrix::dataDir = "..\\data\\";  // directory for geometric objects
 
+
+// generate random geometric 2-D figures such as circles and squares of
+// varying sizes and colors.
+void Matrix::genGeometricFigs()
+{
+	constexpr int nfigs = 1;
+	constexpr int maxrad = 10;
+	// don't want white = 9, want 0-8
+	constexpr int maxdensity = 9;
+	// number of increment steps to draw the figure
+	constexpr int nsteps = 25;
+	// radius of circle, length/2 of square
+	int rad;
+	double x, y;
+	int midx, midy;
+	// loop over the number of figures
+	for (int fig = 0; fig < nfigs; fig++) {
+		// generate random radius in [0,10), (x,y) coordinate in (0,50]
+		// loop until circle/square is inside (0,50] matrix dimensions
+		do {
+			rad = std::rand()%maxrad + 3;
+			midx = std::rand()%dim;
+			midy = std::rand()%dim;
+		} while ((midx-rad)<=0 || (dim-midx-rad)<=0 ||
+				(midy-rad)<=0 || (dim-midy-rad)<=0);
+
+		// create the density in (0, 10]
+		int density = std::rand() % maxdensity + 1;
+		// create circle or square
+		if (std::rand()%2) {
+			// square:  x +/- rad @ y1,y2  y +- rad @ x1,x2
+			double incr = double(2*rad)/nsteps;
+			x = double(midx-rad);
+			y = double(midy-rad);
+			for (int i = 0; i <= nsteps; i++) {
+				mat[midy+rad][int(x)] = density;
+				mat[midy-rad][int(x)] = density;
+				mat[int(y)][midx+rad] = density;
+				mat[int(y)][midx-rad] = density;
+				x=double(x+incr);
+				y=double(y+incr);
+			}
+			mat[midy+rad][midx+rad] = density;
+		} else {
+			// circle:  x +/- rad*cos(ang), y +/- rad*sin(ang), ang = (0, 90)
+			double incr = 3.14159265358979323846264/(2*nsteps);
+			double ang = 0.0;
+			// use symmetry of trig functions to only compute quadrant (0,pi/4)
+			for (int i = 0; i < nsteps; i++) {
+				x = rad*std::cos(ang);
+				y = rad*std::sin(ang);
+				mat[int(midy+y)][int(midx+x)] = density;
+				mat[int(midy-y)][int(midx+x)] = density;
+				mat[int(midy+y)][int(midx-x)] = density;
+				mat[int(midy-y)][int(midx-x)] = density;
+				ang+=incr;
+			}
+			mat[midy][midx+rad] = 0;
+		}
+	}
+}
 
 void Matrix::loadMatrixDensity()
 {
@@ -100,7 +160,7 @@ void Matrix::loadMatrixDensity()
 		throw std::runtime_error("cannot open file " + namedensities);
 	}
 
-	// Read the geometric object file containing the densities
+	// Read the matrix density file
 	for (int i = 0; i < dim; i++) {
 		for (int j = 0; j < dim; j++) {
 			fmatrix >> mat[i][j];
@@ -1069,16 +1129,8 @@ void Matrix::handleRotateMatrixRowDown(int niters)
 	// number of iterations.  Divide the matrix up among the threads.
 	// Each thread task colors a portion of the matrix.
 
-	// create the densities and show their colors
-	constexpr int maxdensity = 10;
-
-	// Set each row a different density
-	for (int row = 0; row < dim; row++) {
-		int density = std::rand()%maxdensity;
-		for (int col = 0; col < dim; col++) {
-			mat[row][col] = density;
-		}
-	}
+	// Create 2-D geometric figures and insert into the matrix
+	genGeometricFigs();
 
 	// read the matrix values containing the densities (0-9) and convert to FG and BG colors
 	for (const auto &vec : mat) {
@@ -1127,6 +1179,13 @@ void Matrix::handleRotateMatrixRowDown(int niters)
 		}
 		std::cout << "----------------------------------------------------------------------------------------------------\n";
 	}
+
+	// clear the matrix
+	for (auto &vec : mat) {
+		for (auto &dens : vec) {
+			dens = 0;
+		}
+	}
 }
 
 // rotate the matrix rows up
@@ -1143,16 +1202,8 @@ void Matrix::handleRotateMatrixRowUp(int niters)
 	// number of iterations.  Divide the matrix up among the threads.
 	// Each thread task colors a portion of the matrix.
 
-	// create the densities and show their colors
-	constexpr int maxdensity = 10;
-
-	// Set each row a different density
-	for (int row = 0; row < dim; row++) {
-		int density = std::rand()%maxdensity;
-		for (int col = 0; col < dim; col++) {
-			mat[row][col] = density;
-		}
-	}
+	// Create 2-D geometric figures and insert into the matrix
+	genGeometricFigs();
 
 	// read the matrix values containing the densities (0-9) and convert to FG and BG colors
 	for (const auto &vec : mat) {
@@ -1201,6 +1252,13 @@ void Matrix::handleRotateMatrixRowUp(int niters)
 			std::cout << std::endl;
 		}
 		std::cout << "----------------------------------------------------------------------------------------------------\n";
+	}
+
+	// clear the matrix
+	for (auto &vec : mat) {
+		for (auto &dens : vec) {
+			dens = 0;
+		}
 	}
 }
 

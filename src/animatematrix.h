@@ -76,7 +76,11 @@ class Matrix {
     void rotateMatrix90CW(int submatrix);
     void rotateMatrix90CCW(int submatrix);
 
+    // read the matrix density file
     void loadMatrixDensity();
+
+    // generate 2-D geometric figures
+    void genGeometricFigs();
 
 	// alias for a member void function with int argument
     using matrixMbr = void(Matrix::*)(int);

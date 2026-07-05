@@ -92,7 +92,8 @@ hardware concurrency = 12
 <img width="935" height="959" alt="image" src="https://github.com/user-attachments/assets/a86e30db-6d5d-40bb-85de-47c1c924016b" />
 <img width="997" height="955" alt="image" src="https://github.com/user-attachments/assets/066976fb-f3e8-45fd-86ce-46de685dfcec" />
 <h4>Matrix Rotate Serpentine CCW</h4>
-
+<img width="939" height="875" alt="image" src="https://github.com/user-attachments/assets/b8ef5286-84aa-4130-8963-d7a59f15d084" />
+<img width="936" height="968" alt="image" src="https://github.com/user-attachments/assets/25867343-6b79-4366-b8a1-c82275da7cae" />
 <h4>Matrix Rotate Row Down</h4>
 
 <h4>Matrix Rotate Column Right</h4>

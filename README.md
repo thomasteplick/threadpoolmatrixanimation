@@ -66,6 +66,28 @@ terminates when the user enters 0 as described below.
 </p>
 
 <h4>Matrix color</h4>
+C:\Users\Thoma\eclipse-workspace\ThreadPoolAnimation\Debug>ThreadPoolAnimation.exe
+<pre>
+Choose operation to perform on the matrix and the number of iterations
+0:quit
+1:matrix color
+2:matrix rotate spiral CW
+3:matrix rotate spiral CCW
+4:matrix rotate 90 degrees CW
+5:matrix rotate 90 degrees CCW
+6:matrix rotate serpentine CW
+7:matrix rotate serpentine CCW
+8:matrix rotate row down
+9:matrix rotate row up
+10:matrix rotate column left
+11:matrix rotate column right --> 1
+
+Enter number of iterations (0-200) --> 1
+You entered 1 1
+hardware concurrency = 12
+</pre>
+<img width="907" height="920" alt="image" src="https://github.com/user-attachments/assets/59d8b7eb-1f38-4892-83bf-ff9e37efdcde" />
+Choose operation to perform on the matrix (0-11) and the number of iterations (0-200) -->
 
 <h4>Matrix Rotate Spiral CW</h4>
 

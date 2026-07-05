@@ -87,7 +87,6 @@ You entered 1 1
 hardware concurrency = 12
 </pre>
 <img width="907" height="920" alt="image" src="https://github.com/user-attachments/assets/59d8b7eb-1f38-4892-83bf-ff9e37efdcde" />
-Choose operation to perform on the matrix (0-11) and the number of iterations (0-200) -->
 
 <h4>Matrix Rotate Spiral CW</h4>
 

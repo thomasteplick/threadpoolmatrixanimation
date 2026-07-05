@@ -94,6 +94,8 @@ hardware concurrency = 12
 <h4>Matrix Rotate Serpentine CCW</h4>
 <img width="935" height="896" alt="image" src="https://github.com/user-attachments/assets/4990924d-d14d-4841-8be0-d5c59354b6be" />
 <img width="927" height="954" alt="image" src="https://github.com/user-attachments/assets/bbba5bdf-936a-495e-be89-e5aeba6505f0" />
+<h4>Matrix Rotate 90 degrees CW
+
 <h4>Matrix Rotate Row Down</h4>
 
 <h4>Matrix Rotate Column Right</h4>

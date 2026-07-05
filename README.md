@@ -1,0 +1,76 @@
+<h3> 
+Matrix Animation using Threadpools in C++11
+</h3>
+<p>
+This program is written in C++11 and uses Eclipse CDE 2025-06 IDE with GCC compiler and MINGW linker. 
+The program takes advantage of the C++ Multithread concurrency library. It creates five worker threads
+which run continuously for the life of the program.  Work tasks are pushed to a FIFO queue by the handler thread.
+The tasks are matrix maniuplation methods which color or rotate the matrix contents in various ways.
+The worker threads calls front/pop the tasks off the queue and perform the processing of the matrix concurrently
+with each other.  Each thread reads and writes to a different part of the matrix so there is no race
+condition.  The key analysis is determining how to process the matrix so that each thread does not write to
+a part of the matrix that another thread is reading or writing to.  An atomic variable <i>workdone</i> is 
+used to signal the handler thread when all the worker threads have completed
+their individual processing of the matrix.  The worker threads increment the <i>workdone</i> atomic variable counter.
+Since the variable is an atomic_short, there is also no data race.  The worker threads access the task queue using a
+unique_lock on a mutex and a condition variable to wait until the task queue is not empty.  When signaled by the 
+handler thread with notify_one, they pop the first task in the queue, unlock the mutex, and execute the task with any supplied parameters.
+They will stop running and exit if the stop flag is set by the handler. This will occur when the program terminates.  The program
+terminates when the user enters 0 as described below.
+
+</p>
+
+<p>
+<h4>Here is the list of coloring/rotation operations that can be performed on the matrix:</h4>
+	<ol start="0">
+		<li>quit</li>
+		<li>matrix color</li>
+		<li>matrix rotate spiral CW</li>
+		<li>matrix rotate spiral CCW</li>
+		<li>matrix rotate 90 degrees CW</li>
+		<li>matrix rotate 90 degrees CCW</li>
+		<li>matrix rotate serpentine CW</li>
+		<li>matrix rotate serpentine CCW</li>
+		<li>matrix rotate row down</li>
+		<li>matrix rotate row up</li>
+		<li>matrix rotate column left</li>
+		<li>matrix rotate column right</li>
+	</ol>
+</p>
+
+<p>
+<h4>Here are brief descriptions of what each operation listed above does.</h4>
+<br />
+<b>Matrix Color</b> colors the matrix elements to a different color each iteration.
+<br />
+<b>Matrix Rotate Spiral CW/CCW</b> rotates the matrix such that each row and column of the 
+ submatrices are rotated together in spiral fashion. Starting at the outermost matrix, each
+ element is moved CW or CCW one position along the perimeter of the submatrix.  Then the next
+ inner matrix has its elements along the perimeter of the submatrix moved one position.  
+ This continues until a 2 x 2 matrix has its elements moved one position.  A 1x1 matrix of course
+ has nothing to move.  You will rotate the matrix approximately 90/50 degrees each iteration.
+ <br />
+ <b>Matrix Rotate 90 Degrees CW/CCW</b> rotates the matrix 90 degrees each iteration.  This operation
+ is in essence 50 iterations of the above operation since the matrix is 50x50.  The above operation moves
+ each element one position.  You would need to do that 50 times in order to rotate the matrix 90 degrees.
+ <br />
+ <b>Matrix Rotate Serpentine CW/CCW</b> rotates each row and feeds the output to the next row.  Each element
+ in a row is moved one position.  The last/first element in a row is the first/last element in the next row.
+ The last/first element in the last row becomes the first/last element in the first row.
+ <br />
+ <b>Matrix Rotate Row Up/Down</b> rotates the matrix rows up or down.  The top or bottom row of the matrix
+ is fed to the bottom or top row of the matrix.  The rows are wrapped around.
+ <br />
+ <b>Matrix Rotate Column Left/Right</b> rotates the columns of the matrix left or right.
+ The columns are wrapped around.
+</p>
+
+<h4>Matrix color</h4>
+
+<h4>Matrix Rotate Spiral CW</h4>
+
+<h4>Matrix Rotate Serpentine CCW</h4>
+
+<h4>Matrix Rotate Row Down</h4>
+
+<h4>Matrix Rotate Column Right</h4>

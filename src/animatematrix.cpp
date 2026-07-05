@@ -82,8 +82,9 @@ static std::vector<int> density2BGcolor = {
 	FOREGROUND_WHITE << 4,
 };
 
+const double pi = 3.14159265358979323846264;
 // one degree step size
-const double delAng = 3.14159265358979323846264/180.0;
+const double delAng = pi/180.0;
 // static constant members
 const std::string Matrix::namedensities = "nametjt.txt"; // matrix density, 50x50
 const std::string Matrix::dataDir = "..\\data\\";  // directory for geometric objects
@@ -93,7 +94,7 @@ const std::string Matrix::dataDir = "..\\data\\";  // directory for geometric ob
 // varying sizes and colors.
 void Matrix::genGeometricFigs()
 {
-	constexpr int nfigs = 10;
+	constexpr int nfigs = 15;
 	constexpr int maxrad = 10;
 	// don't want white = 9, want 0-8
 	constexpr int maxdensity = 9;
@@ -103,6 +104,7 @@ void Matrix::genGeometricFigs()
 	int rad;
 	double x, y;
 	int midx, midy;
+	double incr;
 	// loop over the number of figures
 	for (int fig = 0; fig < nfigs; fig++) {
 		// generate random radius in [0,10), (x,y) coordinate in (0,50]
@@ -114,12 +116,13 @@ void Matrix::genGeometricFigs()
 		} while ((midx-rad)<=0 || (dim-midx-rad)<=0 ||
 				(midy-rad)<=0 || (dim-midy-rad)<=0);
 
-		// create the density in (0, 10]
+		// create the density in (1, 10], skip yellow=0
 		int density = std::rand() % maxdensity + 1;
-		// create circle or square
-		if (std::rand()%2) {
+		// create circle, triangle, or square - 3 figures
+		switch (std::rand() % 3) {
+		case 0:
 			// square:  x +/- rad @ y1,y2  y +- rad @ x1,x2
-			double incr = double(2*rad)/nsteps;
+			incr = double(2*rad)/nsteps;
 			x = double(midx-rad);
 			y = double(midy-rad);
 			for (int i = 0; i <= nsteps; i++) {
@@ -131,9 +134,71 @@ void Matrix::genGeometricFigs()
 				y=double(y+incr);
 			}
 			mat[midy+rad][midx+rad] = density;
-		} else {
+			break;
+		case 1:
+			// triangle, choose a point p1 on radius, generate two other points
+			// +/-120 degrees from p1.  use point-slope formula to generate the
+			// lines connecting the vertices of the triangle. y2 = y1+m*(x2-x1)
+			// m=(y2-y1)/(x2-x1), delta x = (x2-x1)/npoints, use floating point
+
+			// generate first point on radius, other ones +/-120 deg from first
+		{
+			double phi1 = pi*double(std::rand())/double(RAND_MAX);
+			double phi2 = phi1+2.0*pi/3.0;
+			double phi3 = phi1-2.0*pi/3.0;
+
+			double x1 = rad*std::cos(phi1);
+			double y1 = rad*std::sin(phi1);
+
+			double x2= rad*std::cos(phi2);
+			double y2 = rad*std::sin(phi2);
+
+			double x3 = rad*std::cos(phi3);
+			double y3 = rad*std::sin(phi3);
+
+			// draw line from x1 to x2
+			// slope m, xdelta, ydelta
+			//double m = (y2-y1)/(x2-x1);
+			double delx = (x2-x1)/nsteps;
+			double dely = (y2-y1)/nsteps;
+			double x = midx+x1;
+			double y = midy+y1;
+			for (int i = 0; i < nsteps; i++) {
+				mat[int(y)][int(x)] = density;
+				x+=delx;
+				y+=dely;
+			}
+
+			// draw line from x1 to x3
+			// slope m, deltax, deltay
+			//m = (y3-y1)/(x3-x1);
+			delx = (x3-x1)/nsteps;
+			dely = (y3-y1)/nsteps;
+		    x = midx+x1;
+			y = midy+y1;
+			for (int i = 0; i < nsteps; i++) {
+				mat[int(y)][int(x)] = density;
+				x+=delx;
+				y+=dely;
+			}
+
+			// draw line from x2 to x3
+			// slope m, deltax, deltay
+			//m = (y3-y2)/(x3-x2);
+			delx = (x3-x2)/nsteps;
+			dely = (y3-y2)/nsteps;
+		    x = midx+x2;
+			y = midy+y2;
+			for (int i = 0; i < nsteps; i++) {
+				mat[int(y)][int(x)] = density;
+				x+=delx;
+				y+=dely;
+			}
+			break;
+		}
+		case 2:
 			// circle:  x +/- rad*cos(ang), y +/- rad*sin(ang), ang = (0, 90)
-			double incr = 3.14159265358979323846264/(2*nsteps);
+			incr = pi/(2.0*nsteps);
 			double ang = 0.0;
 			// use symmetry of trig functions to only compute quadrant (0,pi/4)
 			for (int i = 0; i < nsteps; i++) {
@@ -146,6 +211,7 @@ void Matrix::genGeometricFigs()
 				ang+=incr;
 			}
 			mat[midy][midx+rad] = 0;
+			break;
 		}
 	}
 }

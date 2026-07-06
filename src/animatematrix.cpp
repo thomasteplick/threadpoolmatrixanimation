@@ -1195,6 +1195,13 @@ void Matrix::handleRotateMatrixRowDown(int niters)
 	// number of iterations.  Divide the matrix up among the threads.
 	// Each thread task colors a portion of the matrix.
 
+	// clear the matrix
+	for (auto &vec : mat) {
+		for (auto &dens : vec) {
+			dens = 0;
+		}
+	}
+	
 	// Create 2-D geometric figures and insert into the matrix
 	genGeometricFigs();
 
@@ -1268,6 +1275,13 @@ void Matrix::handleRotateMatrixRowUp(int niters)
 	// number of iterations.  Divide the matrix up among the threads.
 	// Each thread task colors a portion of the matrix.
 
+	// clear the matrix
+	for (auto &vec : mat) {
+		for (auto &dens : vec) {
+			dens = 0;
+		}
+	}
+	
 	// Create 2-D geometric figures and insert into the matrix
 	genGeometricFigs();
 

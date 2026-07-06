@@ -100,5 +100,6 @@ hardware concurrency = 12
 <img width="970" height="992" alt="image" src="https://github.com/user-attachments/assets/d520e77b-8f29-4d09-9096-d734fd4e5e63" />
 <img width="959" height="995" alt="image" src="https://github.com/user-attachments/assets/c498ef82-7af2-4449-ab4d-cb32a8831148" />
 <h4>Matrix Rotate Row Down</h4>
+<img width="941" height="997" alt="image" src="https://github.com/user-attachments/assets/b44b29c4-9954-479c-a9a3-10df13e683e5" />
+<img width="937" height="963" alt="image" src="https://github.com/user-attachments/assets/7845cc87-6c22-4a61-b920-fe2ae8b7593b" />
 
-<h4>Matrix Rotate Column Right</h4>

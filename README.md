@@ -6,6 +6,7 @@ This program is written in C++11 and uses Eclipse CDE 2025-06 IDE with GCC compi
 The program takes advantage of the C++ Multithread concurrency library. It creates five worker threads
 which run continuously for the life of the program.  Work tasks are pushed to a FIFO queue by the handler thread.
 The tasks are matrix maniuplation methods which color or rotate the matrix contents in various ways.
+The matrix is 50 x 50 of type int.
 The worker threads calls front/pop the tasks off the queue and perform the processing of the matrix concurrently
 with each other.  Each thread reads and writes to a different part of the matrix so there is no race
 condition.  The key analysis is determining how to process the matrix so that each thread does not write to
@@ -49,6 +50,7 @@ terminates when the user enters 0 as described below.
  inner matrix has its elements along the perimeter of the submatrix moved one position.  
  This continues until a 2 x 2 matrix has its elements moved one position.  A 1x1 matrix of course
  has nothing to move.  You will rotate the matrix approximately 90/50 degrees each iteration.
+ Iterating this task 50 times is equivalent to performing Matrix Rotate 90 degrees with one iteration.
  <br />
  <b>Matrix Rotate 90 Degrees CW/CCW</b> rotates the matrix 90 degrees each iteration.  This operation
  is in essence 50 iterations of the above operation since the matrix is 50x50.  The above operation moves
@@ -95,7 +97,8 @@ hardware concurrency = 12
 <img width="935" height="896" alt="image" src="https://github.com/user-attachments/assets/4990924d-d14d-4841-8be0-d5c59354b6be" />
 <img width="927" height="954" alt="image" src="https://github.com/user-attachments/assets/bbba5bdf-936a-495e-be89-e5aeba6505f0" />
 <h4>Matrix Rotate 90 degrees CW
-
+<img width="970" height="992" alt="image" src="https://github.com/user-attachments/assets/d520e77b-8f29-4d09-9096-d734fd4e5e63" />
+<img width="959" height="995" alt="image" src="https://github.com/user-attachments/assets/c498ef82-7af2-4449-ab4d-cb32a8831148" />
 <h4>Matrix Rotate Row Down</h4>
 
 <h4>Matrix Rotate Column Right</h4>

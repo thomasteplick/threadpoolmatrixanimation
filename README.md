@@ -7,14 +7,14 @@ The program takes advantage of the C++ Multithread concurrency library. It creat
 which run continuously for the life of the program.  Work tasks are pushed to a FIFO queue by the handler thread.
 The tasks are matrix maniuplation methods which color or rotate the matrix contents in various ways.
 The matrix is 50 x 50 of type int.
-The worker threads calls front/pop the tasks off the queue and perform the processing of the matrix concurrently
+The worker threads call front and pop on the queue to take the tasks off the queue and perform the processing of the matrix concurrently
 with each other.  Each thread reads and writes to a different part of the matrix so there is no race
 condition.  The key analysis is determining how to process the matrix so that each thread does not write to
 a part of the matrix that another thread is reading or writing to.  An atomic variable <i>workdone</i> is 
 used to signal the handler thread when all the worker threads have completed
 their individual processing of the matrix.  The worker threads increment the <i>workdone</i> atomic variable counter.
-Since the variable is an atomic_short, there is also no data race.  The worker threads access the task queue using a
-unique_lock on a mutex and a condition variable to wait until the task queue is not empty.  When signaled by the 
+Since the variable is an atomic_short, there is also no data race.  The worker threads access the task queue by using a
+unique_lock on a mutex and a condition variable and wait until the task queue is not empty.  When signaled by the 
 handler thread with notify_one, they pop the first task in the queue, unlock the mutex, and execute the task with any supplied parameters.
 They will stop running and exit if the stop flag is set by the handler. This will occur when the program terminates.  The program
 terminates when the user enters 0 as described below.

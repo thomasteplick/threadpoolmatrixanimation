@@ -91,7 +91,8 @@ class Matrix {
 public:
 
     Matrix(int numTasks = std::thread::hardware_concurrency());
-    ~Matrix();
+    Matrix();
+   ~Matrix();
 
     // Enqueue task for execution by the thread pool
     void enqueue(std::pair<int,int> task);

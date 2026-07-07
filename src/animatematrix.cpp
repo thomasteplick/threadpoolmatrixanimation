@@ -1500,6 +1500,19 @@ Matrix::Matrix(int nthreads)
 	}
 }
 
+// default constructor
+Matrix::Matrix()
+{
+	numThreads = 5;
+	tasksdone = 0;
+	mat_buffer = 0;
+	stop = false;
+	// Create worker threads
+	for (int i = 0; i < numThreads; ++i) {
+		threads.emplace_back((std::thread(&Matrix::runWorkerTask, this)));
+	}
+}
+
 // Destructor to stop the thread pool
 Matrix::~Matrix()
 {

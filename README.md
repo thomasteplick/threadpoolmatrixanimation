@@ -36,7 +36,7 @@ terminates when the user enters 0 as described below.
 		<li>matrix rotate row up</li>
 		<li>matrix rotate column left</li>
 		<li>matrix rotate column right</li>
-		<li>12:matrix rotate composite --></li>
+		<li>matrix rotate composite --></li>
 	</ol>
 </p>
 

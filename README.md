@@ -36,7 +36,7 @@ terminates when the user enters 0 as described below.
 		<li>matrix rotate row up</li>
 		<li>matrix rotate column left</li>
 		<li>matrix rotate column right</li>
-		<li>matrix rotate composite --></li>
+		<li>matrix rotate composite</li>
 	</ol>
 </p>
 
@@ -106,4 +106,35 @@ hardware concurrency = 12
 <h4>Matrix Rotate Row Down</h4>
 <img width="941" height="997" alt="image" src="https://github.com/user-attachments/assets/b44b29c4-9954-479c-a9a3-10df13e683e5" />
 <img width="937" height="963" alt="image" src="https://github.com/user-attachments/assets/7845cc87-6c22-4a61-b920-fe2ae8b7593b" />
+<h4>Matrix Rotate Composite, 10 rotation types, the second five are the inverse of the first five.</h4>
+<pre>
+----------------------------------------------------------------------------------------------------
+Choose operation to perform on the matrix (0-12) --> 12
+Enter number of rotation types -> 10
+Enter one rotation type (not 1:matrix color) -> 2
+Enter number of rotations for this type (1-200) -> 5
+Enter one rotation type (not 1:matrix color) -> 4
+Enter number of rotations for this type (1-200) -> 9
+Enter one rotation type (not 1:matrix color) -> 6
+Enter number of rotations for this type (1-200) -> 13
+Enter one rotation type (not 1:matrix color) -> 8
+Enter number of rotations for this type (1-200) -> 17
+Enter one rotation type (not 1:matrix color) -> 10
+Enter number of rotations for this type (1-200) -> 21
+Enter one rotation type (not 1:matrix color) -> 11
+Enter number of rotations for this type (1-200) -> 21
+Enter one rotation type (not 1:matrix color) -> 9
+Enter number of rotations for this type (1-200) -> 17
+Enter one rotation type (not 1:matrix color) -> 7
+Enter number of rotations for this type (1-200) -> 13
+Enter one rotation type (not 1:matrix color) -> 5
+Enter number of rotations for this type (1-200) -> 9
+Enter one rotation type (not 1:matrix color) -> 3
+Enter number of rotations for this type (1-200) -> 5
+You entered 12 130	
+</pre>
+<img width="927" height="955" alt="image" src="https://github.com/user-attachments/assets/cb776152-21c1-47a7-85fe-00a54b5ce1da" />
+<img width="926" height="957" alt="image" src="https://github.com/user-attachments/assets/2335bdb2-f4c7-44bb-a251-20597b241069" />
+
+
 

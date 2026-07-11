@@ -90,6 +90,49 @@ const std::string Matrix::namedensities = "nametjt.txt"; // matrix density, 50x5
 const std::string Matrix::dataDir = "..\\data\\";  // directory for geometric objects
 
 
+
+// generate solid multi-colored squares of varying sizes
+void Matrix::genGeometricFigs2()
+{
+	constexpr int nfigs = 15;
+	constexpr int maxrad = 10;
+	// don't want white = 9, want 0-8
+	constexpr int maxdensity = 9;
+	// number of increment steps to draw the figure
+	constexpr int nsteps = 25;
+	// rad = length/2 of square
+	int rad;
+	double x, y;
+	int midx, midy;
+	double incr;
+	// loop over the number of figures
+	for (int fig = 0; fig < nfigs; fig++) {
+		// generate random radius in [0,10), (x,y) coordinate in (0,50]
+		// loop until square is inside (0,50] matrix dimensions
+		do {
+			rad = std::rand()%maxrad + 3;
+			midx = std::rand()%dim;
+			midy = std::rand()%dim;
+		} while ((midx-rad)<=0 || (dim-midx-rad)<=0 ||
+				(midy-rad)<=0 || (dim-midy-rad)<=0);
+
+		// create the density in (1, 10], skip yellow=0
+		int density = std::rand() % maxdensity + 1;
+		// square:  x = +/- rad @ y1,y2  y = +- rad @ x1,x2
+		incr = double(2*rad)/nsteps;
+		x = double(midx-rad);
+		y = double(midy-rad);
+		for (int i = 0; i <= nsteps; i++) {
+			x = double(midx-rad);
+			for (int j = 0; j <= nsteps; j++) {
+				mat[int(y)][int(x)] = density;
+				x=double(x+incr);
+			}
+			y=double(y+incr);
+		}
+	}
+}
+
 // generate random geometric 2-D figures such as circles and squares of
 // varying sizes and colors.
 void Matrix::genGeometricFigs()
@@ -412,10 +455,10 @@ void Matrix::rotateMatrixSerpentineCCW(int submatrix)
 	int prev;
 	int next;
 	int nrows = dim/numThreads;
-	int startRow = nrows*submatrix;
-	int endRow = startRow + nrows;
+	int startRow = dim - nrows*submatrix -1;
+	int endRow = startRow - nrows;
 
-	for (int row = startRow; row < endRow; row++) {
+	for (int row = startRow; row > endRow; row--) {
 		prev = mat[row][dim-1];
 		mat[row][dim-1] = prevRow[row];;
 		for (int col = dim-1; col > 0; col--) {
@@ -473,17 +516,20 @@ void Matrix::rotateMatrix90CCW(int submatrix)
 {
 	/*
 	 * Rotate the matrix 90 degrees CCW.  Swap rows and columns using
-	 * double-buffer matrix and swapping them back and forth.
+	 * local buffer matrix.
 	 */
-	// mat_buffer is the input buffer, put rotated matrix in the other one.
-	// Place the columns of matrix1 in the rows of matrix2 in reverse order.
+
+	// gain exclusive access to mat
+	//std::unique_lock<std::mutex> lock(mat_mutex);
+
+	// Place the columns of input in the rows of output in reverse order.
 	int ncols = dim/numThreads;
 	int startCol = ncols*submatrix;
 	int endCol = startCol + ncols;
-	int out = (mat_buffer+1)%2;
+
 	for (int col = startCol; col < endCol; col++) {
 		for (int row = 0; row < dim; row++) {
-			dblBuf[out][dim-col-1][row] = dblBuf[mat_buffer][row][col];
+			matbuf[dim-col-1][row] = mat[row][col];
 		}
 	}
 }
@@ -493,17 +539,19 @@ void Matrix::rotateMatrix90CW(int submatrix)
 {
 	/*
 	 * Rotate the matrix 90 degrees CW.  Swap rows and columns using
-	 * double-buffer matrix and swapping them back and forth.
+	 * local buffer matrix .
 	 */
-	// mat_buffer is the input buffer, put rotated matrix in the other one.
-	// Place the columns of matrix1 in the rows of matrix2 in reverse order.
+
+	// gain exclusive access to mat
+	//std::unique_lock<std::mutex> lock(mat_mutex);
+
+	// Place the columns of input in the rows of output in reverse order.
 	int ncols = dim/numThreads;
 	int startCol = ncols*submatrix;
 	int endCol = startCol + ncols;
-	int out = (mat_buffer+1)%2;
 	for (int col = startCol; col < endCol; col++) {
 		for (int row = 0; row < dim; row++) {
-			dblBuf[out][col][dim-row-1] = dblBuf[mat_buffer][row][col];
+			matbuf[col][dim-row-1] = mat[row][col];
 		}
 	}
 }
@@ -915,13 +963,6 @@ void Matrix::handleRotateMatrix90CCW(int niters) {
 		std::cout << std::endl;
 	}
 
-	// copy density from mat to dblBuf[mat_buffer]
-	for (int row = 0; row < dim; row++) {
-		for (int col = 0; col < dim; col++) {
-			dblBuf[mat_buffer][row][col] = mat[row][col];
-		}
-	}
-
 	// rotate the densities created above and show their colors
 	const int rotateMatrix90CCW = 4;
 	for (int iter = 0; iter < niters; ++iter) {
@@ -940,11 +981,15 @@ void Matrix::handleRotateMatrix90CCW(int niters) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(sleepms));
 		}
 
-		// switch buffers atomically
-		mat_buffer = (++mat_buffer)%2;
+		// copy the matrix densities from the buffer
+		for (int row = 0; row < dim; row++) {
+			for (int col = 0; col < dim; col++) {
+				mat[row][col] = matbuf[row][col];
+			}
+		}
 
 		// read the matrix containing the densities (0-9) to be converted to colors
-		for (const auto &vec : dblBuf[mat_buffer]) {
+		for (const auto &vec : mat) {
 			for (const auto &val: vec) {
 				SetConsoleTextAttribute(hConsole, density2FGcolor[val] | density2BGcolor[val]);
 				std::cout << "  ";
@@ -960,8 +1005,7 @@ void Matrix::handleRotateMatrix90CCW(int niters) {
 void Matrix::handleRotateMatrix90CW(int niters) {
 	/*
 	 * Rotate the matrix 90 degrees CW.  Swap rows and columns using
-	 * double buffer matrix and swapping them back and forth.  Cannot be done
-	 * in place with one matrix.
+	 * local buffer matrix.  Cannot be done in place with one matrix.
 	 */
 	// map matrix density to windows color attribute
 
@@ -994,13 +1038,6 @@ void Matrix::handleRotateMatrix90CW(int niters) {
 		std::cout << std::endl;
 	}
 
-	// copy density from mat to dblBuf[mat_buffer]
-	for (int row = 0; row < dim; row++) {
-		for (int col = 0; col < dim; col++) {
-			dblBuf[mat_buffer][row][col] = mat[row][col];
-		}
-	}
-
 	// rotate the densities created above and show their colors
 	const int rotateMatrix90CW = 3;
 	for (int iter = 0; iter < niters; ++iter) {
@@ -1019,11 +1056,15 @@ void Matrix::handleRotateMatrix90CW(int niters) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(sleepms));
 		}
 
-		// switch buffers atomically
-		mat_buffer = (++mat_buffer)%2;
+		// copy the matrix densities from the buffer
+		for (int row = 0; row < dim; row++) {
+			for (int col = 0; col < dim; col++) {
+				mat[row][col] = matbuf[row][col];
+			}
+		}
 
 		// read the matrix containing the densities (0-9) to be converted to colors
-		for (const auto &vec : dblBuf[mat_buffer]) {
+		for (const auto &vec : mat) {
 			for (const auto &val: vec) {
 				SetConsoleTextAttribute(hConsole, density2FGcolor[val] | density2BGcolor[val]);
 				std::cout << "  ";
@@ -1150,10 +1191,10 @@ void Matrix::handleRotateMatrixSerpentineCCW(int niters)
 		// Reset to zero each iteration
 		tasksdone = 0;
 
-		// Save the previous iteration's row ends
-		prevRow[0] = mat[dim-1][0];
-		for (int row = 1; row < dim; row++) {
-			prevRow[row] = mat[row-1][0];
+		// Save the previous iteration's row starts
+		prevRow[dim-1] = mat[0][0];
+		for (int row = dim-1; row > 0; row--) {
+			prevRow[row-1] = mat[row][0];
 		}
 
 		// queue the tasks for the worker threads
@@ -1201,7 +1242,7 @@ void Matrix::handleRotateMatrixRowDown(int niters)
 			dens = 0;
 		}
 	}
-	
+
 	// Create 2-D geometric figures and insert into the matrix
 	genGeometricFigs();
 
@@ -1281,7 +1322,7 @@ void Matrix::handleRotateMatrixRowUp(int niters)
 			dens = 0;
 		}
 	}
-	
+
 	// Create 2-D geometric figures and insert into the matrix
 	genGeometricFigs();
 
@@ -1486,13 +1527,160 @@ void Matrix::handleRotateMatrixColumnRight(int niters)
 	}
 }
 
+// Composite matrix rotation consisting of 1-3 rotation types with separate iteration counts
+void Matrix::handleRotateMatrixComposite(const std::vector<int>& nrots, const std::vector<int>& rottype)
+{
+	// Note that the main menu has a 0 entry not covered here which causes the offset
+/*
+ 	    &Matrix::colorMatrix,
+		&Matrix::rotateMatrixSpiralCW,
+		&Matrix::rotateMatrixSpiralCCW,
+		&Matrix::rotateMatrix90CW,
+		&Matrix::rotateMatrix90CCW,
+		&Matrix::rotateMatrixSerpentineCW,
+		&Matrix::rotateMatrixSerpentineCCW,
+		&Matrix::rotateMatrixRowDown,
+		&Matrix::rotateMatrixRowUp,
+		&Matrix::rotateMatrixColumnLeft,
+		&Matrix::rotateMatrixColumnRight,
+ */
+
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+	// Save the current text colors.
+	GetConsoleScreenBufferInfo(hConsole, &csbiInfo);
+
+	// clear the matrix
+	for (auto &vec : mat) {
+		for (auto &dens : vec) {
+			dens = 0;
+		}
+	}
+
+	// Create 2-D solid multi-colored square figures and insert into the matrix
+	genGeometricFigs2();
+
+	// read the matrix values containing the densities (0-9) and convert to FG and BG colors
+	for (const auto &vec : mat) {
+		for (const auto &val: vec) {
+			SetConsoleTextAttribute(hConsole, density2FGcolor[val] | density2BGcolor[val]);
+			std::cout << "  ";
+		}
+		// Restore default foreground and background
+		SetConsoleTextAttribute(hConsole, FOREGROUND_BLACK);
+		std::cout << std::endl;
+	}
+	std::cout << "----------------------------------------------------------------------------------------------------\n";
+
+	for (std::vector<int>::size_type i = 0; i < rottype.size(); i++) {
+
+		for (int j = 0; j < nrots[i]; j++) {
+			// Reset to zero each iteration
+			tasksdone = 0;
+
+			// Determine what to save in the prevRow based on rotation type
+			switch (rottype[i]) {
+			// rotateMatrixSerpentineCW
+			case 6:
+				// Save the previous iteration's row ends
+				prevRow[0] = mat[dim-1][dim-1];
+				for (int row = 1; row < dim; row++) {
+					prevRow[row] = mat[row-1][dim-1];
+				}
+				break;
+			// rotateMatrixSerpentineCCW
+			case 7:
+				// Save the previous iteration's row starts
+				prevRow[dim-1] = mat[0][0];
+				for (int row = dim-1; row > 0; row--) {
+					prevRow[row-1] = mat[row][0];
+				}
+
+				break;
+			// rotateMatrixRowDown
+			case 8:
+				// Save the previous iteration's column ends (last row)
+				for (int col = 0; col < dim; col++) {
+					prevRow[col] = mat[dim-1][col];
+				}
+				break;
+			// rotateMatrixRowUp
+			case 9:
+				// Save the previous iteration's column starts (first row)
+				for (int col = 0; col < dim; col++) {
+					prevRow[col] = mat[0][col];
+				}
+				break;
+			// rotateMatrixColumnLeft
+			case 10:
+				// Save the previous iteration's row starts (first column)
+				for (int row = 0; row < dim; row++) {
+					prevRow[row] = mat[row][0];
+				}
+				break;
+			// rotateMatrixColumnRight
+			case 11:
+				// Save the previous iteration's row ends (last column)
+				for (int row = 0; row < dim; row++) {
+					prevRow[row] = mat[row][dim-1];
+				}
+				break;
+			default:
+				if (rottype[i] < 2 || rottype[i] > 11) {
+					std::cout << "invalid rotation type: " << rottype[i] << std::endl;
+				}
+			}
+
+			// queue the tasks for the worker threads
+			for (int k = 0; k < numThreads; k++) {
+				enqueue(std::make_pair(rottype[i]-1, k));
+			}
+
+			const int sleepms = 25;
+			// Wait for the worker threads to finish their tasks
+			while (tasksdone != numThreads) {
+				std::this_thread::sleep_for(std::chrono::milliseconds(sleepms));
+			}
+
+			// rotateMatrix90CW, rotateMatrix90CCW
+			if (rottype[i] == 4 || rottype[i] == 5) {
+				// copy the matrix densities from the buffer
+				for (int row = 0; row < dim; row++) {
+					for (int col = 0; col < dim; col++) {
+						mat[row][col] = matbuf[row][col];
+					}
+				}
+			}
+
+		}
+
+	}
+
+	// read the matrix containing the densities (0-9) to be converted to colors
+	for (const auto &vec : mat) {
+		for (const auto &val: vec) {
+			SetConsoleTextAttribute(hConsole, density2FGcolor[val] | density2BGcolor[val]);
+			std::cout << "  ";
+		}
+		// Restore default foreground and background
+		SetConsoleTextAttribute(hConsole, FOREGROUND_BLACK);
+		std::cout << std::endl;
+	}
+	std::cout << "----------------------------------------------------------------------------------------------------\n";
+
+	// clear the matrix
+	for (auto &vec : mat) {
+		for (auto &dens : vec) {
+			dens = 0;
+		}
+	}
+}
+
 // Constructor to create a thread pool with given number of threads
 Matrix::Matrix(int nthreads)
 {
 	numThreads = nthreads;
 	tasksdone = 0;
-	// double buffer to use
-	mat_buffer = 0;
 	stop = false;
 	// Create worker threads
 	for (int i = 0; i < numThreads; ++i) {
@@ -1505,7 +1693,6 @@ Matrix::Matrix()
 {
 	numThreads = 5;
 	tasksdone = 0;
-	mat_buffer = 0;
 	stop = false;
 	// Create worker threads
 	for (int i = 0; i < numThreads; ++i) {
@@ -1594,7 +1781,6 @@ void Matrix::runWorkerTask()
 
 		// Atomically increment this thread finished its task
 		tasksdone++;
-
 	}
 }
 
@@ -1609,36 +1795,87 @@ int main() {
 	const int minIters = 0;
 	const int maxIters = 200;
 	int matrixOp;
-	int niters;
+	int niters = 0;
+	int nrottypes;
+	std::vector<int> rottype;
+	std::vector<int> nrots;
 	std::srand (time(NULL));
 	std::string result = "";
 	std::cout << "Choose operation to perform on the matrix and the number of iterations\n";
 	std::cout << "0:quit\n1:matrix color\n2:matrix rotate spiral CW\n3:matrix rotate spiral CCW\n";
 	std::cout << "4:matrix rotate 90 degrees CW\n5:matrix rotate 90 degrees CCW\n";
 	std::cout << "6:matrix rotate serpentine CW\n7:matrix rotate serpentine CCW\n8:matrix rotate row down\n";
-	std::cout << "9:matrix rotate row up\n10:matrix rotate column left\n11:matrix rotate column right --> ";
+	std::cout << "9:matrix rotate row up\n10:matrix rotate column left\n11:matrix rotate column right\n";
+	std::cout << "12:matrix rotate composite --> ";
 	std::cin >> matrixOp;
-	std::cout << "\nEnter number of iterations (0-200) --> ";
-	std::cin >> niters;
+	if (matrixOp != 12) {
+		std::cout << "\nEnter number of iterations (0-200) --> ";
+		std::cin >> niters;
+	} else {
+		std::cout << "Enter number of rotation types -> ";
+		int tp;
+		int rts;
+		do {
+			std::cin >> nrottypes;
+		} while (nrottypes < 1);
+		for (int ntyp = 0; ntyp < nrottypes; ntyp++) {
+			std::cout << "Enter one rotation type (not 1:matrix color) -> ";
+			std::cin >> tp;
+			if (tp != 1) {
+				rottype.push_back(tp);
+				std::cout << "Enter number of rotations for this type (1-200) -> ";
+				std::cin >> rts;
+				nrots.push_back(rts);
+				niters+=rts;
+			}
+		}
+	}
 
 	std::cout << "You entered " << matrixOp << " " << niters << std::endl;
 
-	if ((matrixOp < 0) || (matrixOp > 11)) {
-		result += "matrix operation not in range 0-11 ";
+	if ((matrixOp < 0) || (matrixOp > 12)) {
+		result += "matrix operation not in range 0-12 ";
 	}
 	if ((niters < minIters) || (niters > maxIters)) {
 		result += "iterations not in range 0-200\n";
 	}
 	while (result.size() != 0) {
 		std::cout << "Problems: " << result << std::endl;
-		std::cout << "Enter matrix operation and number of iterations --> ";
-		std::cin >> matrixOp >> niters;
+
+		std::cout << "Enter matrix operation --> ";
+		std::cin >> matrixOp;
+
+		if (matrixOp != 12) {
+			std::cout << "\nEnter number of iterations (0-200) --> ";
+			std::cin >> niters;
+		} else {
+			niters = 0;
+			rottype.clear();
+			nrots.clear();
+			std::cout << "Enter number of rotation types -> ";
+			int tp;
+			int rts;
+			do {
+				std::cin >> nrottypes;
+			} while (nrottypes < 1);
+			for (int ntyp = 0; ntyp < nrottypes; ntyp++) {
+				std::cout << "Enter one rotation type (not 1:matrix color) -> ";
+				std::cin >> tp;
+				if (tp != 1) {
+					rottype.push_back(tp);
+					std::cout << "Enter number of rotations for this type (1-200) -> ";
+					std::cin >> rts;
+					nrots.push_back(rts);
+					niters+=rts;
+				}
+			}
+		}
 
 		std::cout << "You entered " << matrixOp << " " << niters << std::endl;
 
 		result.clear();
-		if ((matrixOp < 0) || (matrixOp > 11)) {
-			result += "matrix operation not in range 0-11 ";
+		if ((matrixOp < 0) || (matrixOp > 12)) {
+			result += "matrix operation not in range 0-12 ";
 		}
 		if ((niters < minIters) || (niters > maxIters)) {
 			result += "iterations not in range 0-200\n";
@@ -1691,32 +1928,87 @@ int main() {
 		case 11:
 			matrx.handleRotateMatrixColumnRight(niters);
 			break;
+		case 12:
+			matrx.handleRotateMatrixComposite(nrots, rottype);
+			break;
 		default:
 			std::cout << "matrix operation " << matrixOp << " not valid\n";
 		}
 
-		std::cout << "Choose operation to perform on the matrix (0-11) and the number of iterations (0-200) --> ";
-		std::cin >> matrixOp >> niters;
+		std::cout << "Choose operation to perform on the matrix (0-12) --> ";
+		std::cin >> matrixOp;
+		if (matrixOp != 12) {
+			std::cout << "\nEnter number of iterations (0-200) --> ";
+			std::cin >> niters;
+		} else {
+			niters = 0;
+			rottype.clear();
+			nrots.clear();
+			std::cout << "Enter number of rotation types -> ";
+			int tp;
+			int rts;
+			do {
+				std::cin >> nrottypes;
+			} while (nrottypes < 1);
+			for (int ntyp = 0; ntyp < nrottypes; ntyp++) {
+				std::cout << "Enter one rotation type (not 1:matrix color) -> ";
+				std::cin >> tp;
+				if (tp != 1) {
+					rottype.push_back(tp);
+					std::cout << "Enter number of rotations for this type (1-200) -> ";
+					std::cin >> rts;
+					nrots.push_back(rts);
+					niters+=rts;
+				}
+			}
+		}
 
 		std::cout << "You entered " << matrixOp << " " << niters << std::endl;
 
 		result.clear();
-		if ((matrixOp < 0) || (matrixOp >11)) {
-			result += "matrix operation not in range 0-11 ";
+		if ((matrixOp < 0) || (matrixOp >12)) {
+			result += "matrix operation not in range 0-12 ";
 		}
 		if ((niters < minIters) || (niters > maxIters)) {
 			result += "iterations not in range 0-200\n";
 		}
 		while (result.size() != 0) {
 			std::cout << "Problems: " << result << std::endl;
-			std::cout << "Enter matrix operation and number of iterations --> ";
-			std::cin >> matrixOp >> niters;
+
+			std::cout << "Enter matrix operation --> ";
+			std::cin >> matrixOp;
+
+			if (matrixOp != 12) {
+				std::cout << "\nEnter number of iterations (0-200) --> ";
+				std::cin >> niters;
+			} else {
+				niters = 0;
+				rottype.clear();
+				nrots.clear();
+				std::cout << "Enter number of rotation types -> ";
+				int tp;
+				int rts;
+				do {
+					std::cin >> nrottypes;
+				} while (nrottypes < 1);
+				for (int ntyp = 0; ntyp < nrottypes; ntyp++) {
+					std::cout << "Enter one rotation type (not 1:matrix color) -> ";
+					std::cin >> tp;
+					if (tp != 1) {
+						rottype.push_back(tp);
+						std::cout << "Enter number of rotations for this type (1-200) -> ";
+						std::cin >> rts;
+						nrots.push_back(rts);
+						niters+=rts;
+					}
+				}
+			}
 
 			std::cout << "You entered " << matrixOp << " " << niters << std::endl;
 
 			result.clear();
-			if ((matrixOp < 0) || (matrixOp > 11)) {
-				result += "matrix operation not in range 0-11 ";
+			if ((matrixOp < 0) || (matrixOp > 12)) {
+				result += "matrix operation not in range 0-12 ";
 			}
 			if ((niters < minIters) || (niters > maxIters)) {
 				result += "iterations not in range 0-200\n";

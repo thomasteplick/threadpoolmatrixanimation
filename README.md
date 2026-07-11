@@ -36,6 +36,7 @@ terminates when the user enters 0 as described below.
 		<li>matrix rotate row up</li>
 		<li>matrix rotate column left</li>
 		<li>matrix rotate column right</li>
+		<li>12:matrix rotate composite --></li>
 	</ol>
 </p>
 
@@ -65,6 +66,8 @@ terminates when the user enters 0 as described below.
  <br />
  <b>Matrix Rotate Column Left/Right</b> rotates the columns of the matrix left or right.
  The columns are wrapped around.
+<br />
+<b>Matrix Rotate Composite</b> rotates the sequence of rotation types with the specified number of iterations.
 </p>
 
 <h4>Matrix color</h4>
@@ -82,7 +85,8 @@ Choose operation to perform on the matrix and the number of iterations
 8:matrix rotate row down
 9:matrix rotate row up
 10:matrix rotate column left
-11:matrix rotate column right --> 1
+11:matrix rotate column right
+12:matrix rotate composite --> 1
 
 Enter number of iterations (0-200) --> 1
 You entered 1 1

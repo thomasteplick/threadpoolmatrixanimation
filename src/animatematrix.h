@@ -29,7 +29,8 @@ class Matrix {
 
 	// the matrix that will be animated
     int mat[dim][dim];
-    int dblBuf[2][dim][dim];
+    // buffer for rotate 90degrees
+    int matbuf[dim][dim];
 
     // Last row element in mat from previous iteration
     int prevRow[dim];
@@ -49,9 +50,6 @@ class Matrix {
 
     // number of tasks done, protected by cv_taskdone
     std::atomic<short> tasksdone;
-
-    // matrix buffer to use
-    std::atomic<short> mat_buffer;
 
     // Flag to indicate whether the thread pool should stop
     // or not
@@ -82,6 +80,9 @@ class Matrix {
     // generate 2-D geometric figures
     void genGeometricFigs();
 
+    // generate multi-colored solid squares of varying sizes
+    void genGeometricFigs2();
+
 	// alias for a member void function with int argument
     using matrixMbr = void(Matrix::*)(int);
 
@@ -92,7 +93,7 @@ public:
 
     Matrix(int numTasks = std::thread::hardware_concurrency());
     Matrix();
-   ~Matrix();
+    ~Matrix();
 
     // Enqueue task for execution by the thread pool
     void enqueue(std::pair<int,int> task);
@@ -129,6 +130,9 @@ public:
 
     // rotate the matrix columns right
     void handleRotateMatrixColumnRight(int niters);
+
+    // rotate the matrix as a composition of 1-3 types
+    void handleRotateMatrixComposite(const std::vector<int>& nrots, const std::vector<int>& rottype);
 
     // no copying or moving or assigning
     Matrix(const Matrix &mat) = delete;

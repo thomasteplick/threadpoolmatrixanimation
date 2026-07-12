@@ -114,6 +114,39 @@ hardware concurrency = 12
 <h4>Matrix Rotate Row Down</h4>
 <img width="941" height="997" alt="image" src="https://github.com/user-attachments/assets/b44b29c4-9954-479c-a9a3-10df13e683e5" />
 <img width="937" height="963" alt="image" src="https://github.com/user-attachments/assets/7845cc87-6c22-4a61-b920-fe2ae8b7593b" />
+<h4>Matrix Rotate Composite, 5 rotation types, no inverse rotations</h4>
+<pre>
+C:\Users\Thoma\eclipse-workspace\ThreadPoolAnimation\Debug>ThreadPoolAnimation.exe
+Choose operation to perform on the matrix and the number of iterations
+0:quit
+1:matrix color
+2:matrix rotate spiral CW
+3:matrix rotate spiral CCW
+4:matrix rotate 90 degrees CW
+5:matrix rotate 90 degrees CCW
+6:matrix rotate serpentine CW
+7:matrix rotate serpentine CCW
+8:matrix rotate row down
+9:matrix rotate row up
+10:matrix rotate column left
+11:matrix rotate column right
+12:matrix rotate composite --> 12
+Enter number of rotation types -> 5
+Enter one rotation type (not 1:matrix color) -> 10
+Enter number of rotations for this type (1-200) -> 21
+Enter one rotation type (not 1:matrix color) -> 8
+Enter number of rotations for this type (1-200) -> 35
+Enter one rotation type (not 1:matrix color) -> 6
+Enter number of rotations for this type (1-200) -> 17
+Enter one rotation type (not 1:matrix color) -> 4
+Enter number of rotations for this type (1-200) -> 23
+Enter one rotation type (not 1:matrix color) -> 2
+Enter number of rotations for this type (1-200) -> 7
+You entered 12 103
+hardware concurrency = 12
+</pre>
+<img width="907" height="951" alt="image" src="https://github.com/user-attachments/assets/beaf134a-628e-4712-91ca-22a2e4e12963" />
+<img width="913" height="949" alt="image" src="https://github.com/user-attachments/assets/f63f7e7c-917d-4f5b-ad98-0d72dd6b4888" />
 <h4>Matrix Rotate Composite, 10 rotation types, the second five types are the inverse of the first five types, original recovered</h4>
 <pre>
 ----------------------------------------------------------------------------------------------------

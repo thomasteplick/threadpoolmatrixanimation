@@ -114,7 +114,7 @@ hardware concurrency = 12
 <h4>Matrix Rotate Row Down</h4>
 <img width="941" height="997" alt="image" src="https://github.com/user-attachments/assets/b44b29c4-9954-479c-a9a3-10df13e683e5" />
 <img width="937" height="963" alt="image" src="https://github.com/user-attachments/assets/7845cc87-6c22-4a61-b920-fe2ae8b7593b" />
-<h4>Matrix Rotate Composite, 5 rotation types, no inverse rotations</h4>
+<h4>Matrix Rotate Composite, 5 rotation types, no inverse rotations, output is unrecognizable</h4>
 <pre>
 C:\Users\Thoma\eclipse-workspace\ThreadPoolAnimation\Debug>ThreadPoolAnimation.exe
 Choose operation to perform on the matrix and the number of iterations
@@ -145,37 +145,10 @@ Enter number of rotations for this type (1-200) -> 7
 You entered 12 103
 hardware concurrency = 12
 </pre>
+<h4>Input matrix</h4>
 <img width="907" height="951" alt="image" src="https://github.com/user-attachments/assets/beaf134a-628e-4712-91ca-22a2e4e12963" />
+<h4>Output matrix</h4>
 <img width="913" height="949" alt="image" src="https://github.com/user-attachments/assets/f63f7e7c-917d-4f5b-ad98-0d72dd6b4888" />
-<h4>Matrix Rotate Composite, 10 rotation types, the second five types are the inverse of the first five types, original recovered</h4>
-<pre>
-----------------------------------------------------------------------------------------------------
-Choose operation to perform on the matrix (0-12) --> 12
-Enter number of rotation types -> 10
-Enter one rotation type (not 1:matrix color) -> 2
-Enter number of rotations for this type (1-200) -> 5
-Enter one rotation type (not 1:matrix color) -> 4
-Enter number of rotations for this type (1-200) -> 9
-Enter one rotation type (not 1:matrix color) -> 6
-Enter number of rotations for this type (1-200) -> 13
-Enter one rotation type (not 1:matrix color) -> 8
-Enter number of rotations for this type (1-200) -> 17
-Enter one rotation type (not 1:matrix color) -> 10
-Enter number of rotations for this type (1-200) -> 21
-Enter one rotation type (not 1:matrix color) -> 11
-Enter number of rotations for this type (1-200) -> 21
-Enter one rotation type (not 1:matrix color) -> 9
-Enter number of rotations for this type (1-200) -> 17
-Enter one rotation type (not 1:matrix color) -> 7
-Enter number of rotations for this type (1-200) -> 13
-Enter one rotation type (not 1:matrix color) -> 5
-Enter number of rotations for this type (1-200) -> 9
-Enter one rotation type (not 1:matrix color) -> 3
-Enter number of rotations for this type (1-200) -> 5
-You entered 12 130	
-</pre>
-<img width="927" height="955" alt="image" src="https://github.com/user-attachments/assets/cb776152-21c1-47a7-85fe-00a54b5ce1da" />
-<img width="926" height="957" alt="image" src="https://github.com/user-attachments/assets/2335bdb2-f4c7-44bb-a251-20597b241069" />
 <h4>Matrix Rotate Composite, 10 rotation types, the second five types are the inverse of the first five types, original recovered</h4>
 <pre>
 ----------------------------------------------------------------------------------------------------
@@ -203,5 +176,7 @@ Enter one rotation type (not 1:matrix color) -> 2
 Enter number of rotations for this type (1-200) -> 6
 You entered 12 198
 </pre>
+<h4>Input matrix</h4>
 <img width="914" height="953" alt="image" src="https://github.com/user-attachments/assets/5df11f70-f777-4278-98a2-ab88d860d32a" />
+<h4>Output matrix</h4>
 <img width="911" height="939" alt="image" src="https://github.com/user-attachments/assets/b515aa4f-b715-4dba-b400-93e6895d117f" />

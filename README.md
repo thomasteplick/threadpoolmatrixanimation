@@ -18,7 +18,15 @@ unique_lock on a mutex and a condition variable and wait until the task queue is
 handler thread with notify_one, they pop the first task in the queue, unlock the mutex, and execute the task with any supplied parameters.
 They will stop running and exit if the stop flag is set by the handler. This will occur when the program terminates.  The program
 terminates when the user enters 0 as described below.
-
+</p>
+<p>
+	The matrix composite rotation combines as many rotations as desired with their individual iterations.  All the rotation types
+	have inverse rotations that when combined in sequence with the same iteration counts will produce the original input.  This
+	can be used to disguise the original matrix and make it secure when transmitted in public.  But on the receiving end, the
+	inverse sequence can be applied to recover the original.  The iteration counts of all the rotations can be used as a form
+	of "key".  So even if the rotation types and their exact sequence were known, without the iteration count each rotation
+	type is using will force an interceptor to spend a very long time to recover the original matrix because every possible
+	iteration count must be tried.
 </p>
 
 <p>
@@ -106,7 +114,7 @@ hardware concurrency = 12
 <h4>Matrix Rotate Row Down</h4>
 <img width="941" height="997" alt="image" src="https://github.com/user-attachments/assets/b44b29c4-9954-479c-a9a3-10df13e683e5" />
 <img width="937" height="963" alt="image" src="https://github.com/user-attachments/assets/7845cc87-6c22-4a61-b920-fe2ae8b7593b" />
-<h4>Matrix Rotate Composite, 10 rotation types, the second five types are the inverse of the first five types</h4>
+<h4>Matrix Rotate Composite, 10 rotation types, the second five types are the inverse of the first five types, original recovered</h4>
 <pre>
 ----------------------------------------------------------------------------------------------------
 Choose operation to perform on the matrix (0-12) --> 12
@@ -135,7 +143,7 @@ You entered 12 130
 </pre>
 <img width="927" height="955" alt="image" src="https://github.com/user-attachments/assets/cb776152-21c1-47a7-85fe-00a54b5ce1da" />
 <img width="926" height="957" alt="image" src="https://github.com/user-attachments/assets/2335bdb2-f4c7-44bb-a251-20597b241069" />
-<h4>Matrix Rotate Composite, 10 rotation types, the second five types are the inverse of the first five types</h4>
+<h4>Matrix Rotate Composite, 10 rotation types, the second five types are the inverse of the first five types, original recovered</h4>
 <pre>
 ----------------------------------------------------------------------------------------------------
 Choose operation to perform on the matrix (0-12) --> 12
